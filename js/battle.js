@@ -49,6 +49,12 @@ var Battle = {
             playerUnits.push(unit);
         }
 
+        // 应用阵型效果
+        this.applyFormation(playerUnits);
+
+        var enemyUnits = [];
+        this.applyFormation(playerUnits);
+
         var enemyUnits = [];
         for (var j = 0; j < count; j++) {
             var e = GAME_DATA.enemies[enemyTemplate];
@@ -104,6 +110,45 @@ var Battle = {
         Game.toScreen('battle');
         this.render();
         this.nextTurn();
+    },
+
+    // ===== 阵型效果 =====
+    applyFormation: function(playerUnits) {
+        var fid = Game.state.currentFormation || 'yulin';
+        var f = GAME_DATA.formations[fid];
+        if (!f) return;
+        var eff = f.effect;
+        var len = playerUnits.length;
+
+        // 鱼鳞阵：前排(索引0)防御+25%
+        if (eff.frontDef && len > 0) {
+            playerUnits[0]._def = Math.floor(playerUnits[0]._def * (1 + eff.frontDef));
+        }
+        // 锋矢阵：首发(索引0)伤害+35% -> 攻击+35%
+        if (eff.firstDmg && len > 0) {
+            playerUnits[0]._atk = Math.floor(playerUnits[0]._atk * (1 + eff.firstDmg));
+        }
+        // 八卦阵：全体闪避+18%
+        if (eff.allDodge) {
+            for (var i = 0; i < len; i++) {
+                playerUnits[i]._dodge = Math.floor(playerUnits[i]._dodge + eff.allDodge * 100);
+            }
+        }
+        // 偃月阵：两侧(索引1,2)攻击+10%
+        if (eff.sideDrain) {
+            if (len > 1) playerUnits[1]._atk = Math.floor(playerUnits[1]._atk * 1.1);
+            if (len > 2) playerUnits[2]._atk = Math.floor(playerUnits[2]._atk * 1.1);
+        }
+        // 雁行阵：后排(最后一个)攻击+15%
+        if (eff.backRange && len > 0) {
+            playerUnits[len - 1]._atk = Math.floor(playerUnits[len - 1]._atk * 1.15);
+        }
+        // 长蛇阵：全体速度+12%
+        if (eff.speed) {
+            for (var i = 0; i < len; i++) {
+                playerUnits[i]._spd = Math.floor(playerUnits[i]._spd * (1 + eff.speed));
+            }
+        }
     },
 
     // 获取单位的战斗技能（2个）
@@ -179,6 +224,11 @@ var Battle = {
                     u._skillCd[1] = Math.max(0, u._skillCd[1] - 1);
                 }
                 u._defending = false;
+                // 长蛇阵每回合回蓝10
+                if (Game.state.currentFormation === 'changs' && u._side === 'player') {
+                    u._mp = Math.min(u._maxMp, u._mp + 10);
+                }
+            }
             }
             this.calcActionOrder();
         }
@@ -525,6 +575,42 @@ var Battle = {
     },
 
     endBattle: function() {
+        document.getElementById('battle-result').classList.remove('active');
+        if (this.state.result === 'win') {
+            // 标记当前战斗格子为已击败
+            if (this.state.options.cellKey) {
+                Map.markDefeated(this.state.options.cellKey);
+            }
+
+            var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
+            var pos = Game.state.currentPos;
+            // 检查是否到达出口
+            if (chapter && pos.x === chapter.exitPos.x && pos.y === chapter.exitPos.y) {
+                Game.state.chapter++;
+                var nextChapter = GAME_DATA.chapters[Game.state.chapter - 1];
+                if (nextChapter) {
+                    Game.state.currentPos = { x: nextChapter.startPos.x, y: nextChapter.startPos.y };
+                    Game.state.visitedCells = [];
+                    Game.state.defeatedCells = [];
+                }
+                UI.showModal('章节通关！', '恭喜通关<b>' + chapter.name + '</b>！<br><br>下一章已解锁。');
+            }
+            Game.saveGame();
+            Game.toScreen('map');
+            Map.init();
+        } else {
+            for (var i = 0; i < Game.state.team.length; i++) {
+                var u = Game.state.team[i];
+                var stats = calcStats(u);
+                u.hp = Math.floor(stats.maxHp * 0.3);
+                u.mp = Math.floor(stats.maxMp * 0.3);
+            }
+            UI.showModal('战斗失败', '你败下阵来，但保住了性命。<br><br>休息后再次挑战吧。');
+            Game.toScreen('map');
+            Map.init();
+        }
+        this.state = null;
+    },
         document.getElementById('battle-result').classList.remove('active');
         if (this.state.result === 'win') {
             var si = Game.state.gridIndex;

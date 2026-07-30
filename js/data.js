@@ -2,7 +2,7 @@
 // 【设计快照 2026-07-30】
 // 等级系统：开局5级，升级+2属性点，满级99级
 // 技能系统：每个技能有名称/消耗MP/CD/效果，武将自带2技能+奥义(羁绊2级解锁)
-// 羁绊系统：0-5级，2级解锁奥义，4级主角可学该武将一个技能
+// 羁绊系统：0-5级，2级解锁奥义，4级主角可学武将一个技能
 // 装备限定：武将固定兵器类型，主角全能
 
 var GAME_DATA = {
@@ -307,46 +307,53 @@ var GAME_DATA = {
         boss_lvbu_first: { name: '吕布', avatar: '👹', hp: 2500, atk: 90, def: 45, spd: 25, exp: 1000, silver: 1500, drops: ['yuntie'], isBoss: true }
     },
 
-    // ===== 关卡配置（线性章节，每章多个关卡迷宫） =====
-    // TODO: 后续改为网格迷宫结构
+    // ===== 关卡配置（网格迷宫） =====
+    // 每个关卡是一个 width×height 的网格
+    // cells 以 "x,y" 为键存储格子数据
+    // startPos: 起点坐标, exitPos: 出口/Boss坐标
+    // 移动规则：向上下左右相邻格子移动
+    // 遇到 battle/elite/boss 类型必须先击败才能通过
     chapters: [
         {
-            id: 1, name: '黄巾之乱', stages: 12,
+            id: 1, name: '黄巾之乱',
+            width: 5, height: 5,
+            startPos: { x: 0, y: 2 },
+            exitPos: { x: 4, y: 2 },
             desc: '天下大乱，黄巾军四起，你从家乡出发，初涉乱世。',
-            grids: [
-                { type: 'start', icon: '🏠', desc: '起点：你的故乡' },
-                { type: 'empty', icon: '⬜', desc: '一片荒野，风沙漫天。' },
-                { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '前方有黄巾兵拦路！' },
-                { type: 'npc', icon: '👤', npc: 'cunmin', desc: '一位村民神色慌张，似乎有话要说。', dialog: '壮士！黄巾贼在附近烧杀抢掠，求你出手相助！' },
-                { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '一群黄巾卒挡住了去路。' },
-                { type: 'chest', icon: '📦', desc: '发现了一个被遗弃的箱子。', reward: { items: ['tiekuang:3', 'caoyao:2'], silver: 50 } },
-                { type: 'battle', icon: '💀', enemy: 'huangjin_xiaoshuai', count: 1, desc: '黄巾小帅率领手下在此设伏！' },
-                { type: 'empty', icon: '⬜', desc: '荒凉的村庄，空无一人。' },
-                { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾兵的巡逻队！' },
-                { type: 'npc', icon: '👤', npc: 'tiejiang', desc: '一位老铁匠在废墟中整理工具。', dialog: '小伙子，想打造兵器吗？收集材料来找我。' },
-                { type: 'battle', icon: '💀', enemy: 'huangjin_daoshuai', count: 1, desc: '黄巾大帅亲率精锐驻守此地！' },
-                { type: 'boss', icon: '👹', enemy: 'boss_zhangjiao', desc: '巨鹿城外，张角正在施法召唤雷霆！', reward: { exp: 500, silver: 1000, unlock: 'guanyu' } }
-            ]
+            cells: {
+                '0,2': { type: 'start', icon: '🏠', desc: '起点：你的故乡' },
+                '1,2': { type: 'empty', icon: '⬜', desc: '一片荒野，风沙漫天。' },
+                '1,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '前方有黄巾兵拦路！' },
+                '1,3': { type: 'npc', icon: '👤', npc: 'cunmin', desc: '一位村民神色慌张，似乎有话要说。', dialog: '壮士！黄巾贼在附近烧杀抢掠，求你出手相助！' },
+                '2,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '一群黄巾卒挡住了去路。' },
+                '2,1': { type: 'chest', icon: '📦', desc: '发现了一个被遗弃的箱子。', reward: { items: ['tiekuang:3', 'caoyao:2'], silver: 50 } },
+                '2,3': { type: 'battle', icon: '💀', enemy: 'huangjin_xiaoshuai', count: 1, desc: '黄巾小帅率领手下在此设伏！' },
+                '2,0': { type: 'empty', icon: '⬜', desc: '荒凉的村庄，空无一人。' },
+                '3,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾兵的巡逻队！' },
+                '3,1': { type: 'npc', icon: '👤', npc: 'tiejiang', desc: '一位老铁匠在废墟中整理工具。', dialog: '小伙子，想打造兵器吗？收集材料来找我。' },
+                '3,3': { type: 'hidden', icon: '❓', desc: '空气中弥漫着一股神秘的气息...', condition: { fuqi: 8 }, reward: { items: ['chixiao_frag:1'] } },
+                '4,2': { type: 'boss', icon: '👹', enemy: 'boss_zhangjiao', desc: '巨鹿城外，张角正在施法召唤雷霆！', reward: { exp: 500, silver: 1000, unlock: 'guanyu' } }
+            }
         },
         {
-            id: 2, name: '虎牢风云', stages: 14,
+            id: 2, name: '虎牢风云',
+            width: 5, height: 5,
+            startPos: { x: 0, y: 2 },
+            exitPos: { x: 4, y: 2 },
             desc: '诸侯联军讨伐董卓，虎牢关下，三英战吕布的序幕即将拉开。',
-            grids: [
-                { type: 'start', icon: '🏠', desc: '联军大营，旌旗招展。' },
-                { type: 'battle', icon: '⚔️', enemy: 'xiliang_bing', count: 2, desc: '西凉兵的先锋部队！' },
-                { type: 'empty', icon: '⬜', desc: '虎牢关外，地势险要。' },
-                { type: 'battle', icon: '⚔️', enemy: 'xiliang_qibing', count: 2, desc: '西凉铁骑冲锋而来！' },
-                { type: 'npc', icon: '👤', npc: 'caocao', desc: '曹操正在帐中研究地图。', dialog: '此战关乎天下大势，务必攻破虎牢！' },
-                { type: 'chest', icon: '📦', desc: '联军辎重队遗落的物资。', reward: { items: ['jingtie:2', 'tongkuang:2'], silver: 100 } },
-                { type: 'battle', icon: '💀', enemy: 'xiliang_bing', count: 3, desc: '西凉兵的重重包围！' },
-                { type: 'hidden', icon: '❓', desc: '空气中弥漫着古战场的肃杀之气...', condition: { shenfa: 8 }, reward: { items: ['chixiao_frag:1'] } },
-                { type: 'empty', icon: '⬜', desc: '虎牢关城墙高耸入云。' },
-                { type: 'battle', icon: '⚔️', enemy: 'xiliang_qibing', count: 3, desc: '西凉铁骑的主力！' },
-                { type: 'npc', icon: '👤', npc: 'yuanshao', desc: '袁绍正在召集诸侯议事。', dialog: '吕布勇猛无双，谁敢出战？' },
-                { type: 'chest', icon: '📦', desc: '敌军营帐中发现一个宝箱。', reward: { items: ['xuan_tie:1', 'shoupi:3'], silver: 200 } },
-                { type: 'battle', icon: '💀', enemy: 'xiliang_daoshuai', count: 1, desc: '西凉大将镇守关隘！' },
-                { type: 'boss', icon: '👹', enemy: 'boss_lvbu_first', desc: '吕布手持方天画戟，胯下赤兔马，傲立关前！\n（此战只需坚持10回合即可）', reward: { exp: 800, silver: 1500 }, special: { survive: 10 } }
-            ]
+            cells: {
+                '0,2': { type: 'start', icon: '🏠', desc: '联军大营，旌旗招展。' },
+                '1,2': { type: 'battle', icon: '⚔️', enemy: 'xiliang_bing', count: 2, desc: '西凉兵的先锋部队！' },
+                '1,1': { type: 'empty', icon: '⬜', desc: '虎牢关外，地势险要。' },
+                '1,3': { type: 'battle', icon: '⚔️', enemy: 'xiliang_qibing', count: 2, desc: '西凉铁骑冲锋而来！' },
+                '2,2': { type: 'npc', icon: '👤', npc: 'caocao', desc: '曹操正在帐中研究地图。', dialog: '此战关乎天下大势，务必攻破虎牢！' },
+                '2,1': { type: 'chest', icon: '📦', desc: '联军辎重队遗落的物资。', reward: { items: ['jingtie:2', 'tongkuang:2'], silver: 100 } },
+                '2,3': { type: 'battle', icon: '💀', enemy: 'xiliang_bing', count: 3, desc: '西凉兵的重重包围！' },
+                '3,2': { type: 'empty', icon: '⬜', desc: '虎牢关城墙高耸入云。' },
+                '3,1': { type: 'battle', icon: '⚔️', enemy: 'xiliang_qibing', count: 3, desc: '西凉铁骑的主力！' },
+                '3,3': { type: 'npc', icon: '👤', npc: 'yuanshao', desc: '袁绍正在召集诸侯议事。', dialog: '吕布勇猛无双，谁敢出战？' },
+                '4,2': { type: 'boss', icon: '👹', enemy: 'boss_lvbu_first', desc: '吕布手持方天画戟，胯下赤兔马，傲立关前！\n（此战只需坚持10回合即可）', reward: { exp: 800, silver: 1500 }, special: { survive: 10 } }
+            }
         }
     ],
 

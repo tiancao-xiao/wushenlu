@@ -40,7 +40,7 @@ var UI = {
             teamIds.push(Game.state.team[i].id);
         }
 
-        var html = '<h4 style="margin-bottom:10px;color:#5a4a3a;">当前队伍</h4>';
+        var html = '<h4 style="margin-bottom:10px;color:#5a4a3a;">当前队伍（顺序即站位）</h4>';
 
         for (var j = 0; j < Game.state.team.length; j++) {
             var u = Game.state.team[j];
@@ -68,6 +68,10 @@ var UI = {
                         '<span class="card-stat">🍀' + u.luk + '</span>' +
                     '</div>' +
                     (!u.isHero ? '<div class="card-bond">💝 羁绊 Lv.' + (u.bondLevel || 0) + ' <small>(' + (u.bondExp || 0) + '/' + (GAME_DATA.bondConfig.expNeed[(u.bondLevel || 0) + 1] || 'MAX') + ')</small></div>' : '') +
+                '</div>' +
+                '<div class="position-controls" style="display:flex;flex-direction:column;gap:4px;margin-left:auto;">' +
+                    (j > 0 ? '<button onclick="UI.moveTeamMember(' + j + ', -1)">⬆️</button>' : '<button disabled>⬆️</button>') +
+                    (j < Game.state.team.length - 1 ? '<button onclick="UI.moveTeamMember(' + j + ', 1)">⬇️</button>' : '<button disabled>⬇️</button>') +
                 '</div>' +
             '</div>';
         }
@@ -112,6 +116,17 @@ var UI = {
             '</div>';
         }
         formEl.innerHTML = formHtml;
+    },
+
+    moveTeamMember: function(index, direction) {
+        var team = Game.state.team;
+        var newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= team.length) return;
+        var temp = team[index];
+        team[index] = team[newIndex];
+        team[newIndex] = temp;
+        Game.saveGame();
+        this.renderHeroes();
     },
 
     selectFormation: function(fid) {
