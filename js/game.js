@@ -19,6 +19,15 @@ var Game = {
         if (saved) {
             try {
                 this.state = JSON.parse(saved);
+                // 兼容旧存档：补充 teamPositions
+                if (!this.state.teamPositions) {
+                    this.state.teamPositions = {};
+                    for (var i = 0; i < this.state.team.length; i++) {
+                        var t = this.state.team[i];
+                        var defaults = { hero: {x:1,y:2}, guanping: {x:0,y:2} };
+                        this.state.teamPositions[t.id] = defaults[t.id] || { x: i % 3, y: 2 };
+                    }
+                }
             } catch(e) {
                 this.state = null;
             }
@@ -146,7 +155,11 @@ var Game = {
             formations: ['yulin', 'fengshi', 'bagua'],
             currentFormation: 'yulin',
             defeatedBosses: [],
-            playTime: 0
+            playTime: 0,
+            teamPositions: {
+                hero: { x: 1, y: 2 },
+                guanping: { x: 0, y: 2 }
+            }
         };
 
         this.saveGame();

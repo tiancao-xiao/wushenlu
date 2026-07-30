@@ -1,7 +1,7 @@
 // ===== 地图探索系统（网格迷宫） =====
 // 【设计快照 2026-07-30】
 // 状态：currentPos{x,y}, visitedCells[], defeatedCells[]
-// 移动：上下左右，遇到 battle/elite/boss 未击败则拦截
+// 移动：上下左右，走进怪格子后才拦路（必须击败才能离开）
 
 var Map = {
     init: function() {
@@ -157,25 +157,15 @@ var Map = {
         for (var i = 0; i < visited.length; i++) {
             if (visited[i] === key) { isVisited = true; break; }
         }
-        var isDefeated = false;
-        for (var j = 0; j < defeated.length; j++) {
-            if (defeated[j] === key) { isDefeated = true; break; }
-        }
 
-        var isBlocked = (ncell.type === 'battle' || ncell.type === 'elite' || ncell.type === 'boss') && !isDefeated;
         var style = 'width:56px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;font-size:12px;';
-        if (isBlocked) {
-            style += 'background:#c2392b;color:#fff;border:2px solid #fff;';
-        } else if (isVisited) {
+        if (isVisited) {
             style += 'background:#4a7ab8;color:#fff;border:2px solid #666;';
         } else {
             style += 'background:#333;color:#aaa;border:2px solid #555;';
         }
 
-        var label = dir.label;
-        if (isBlocked) label += '<br>🚫';
-
-        return '<div data-dir="' + dir.key + '" style="' + style + '">' + label + '<br><span style="font-size:16px;">' + ncell.icon + '</span></div>';
+        return '<div data-dir="' + dir.key + '" style="' + style + '">' + dir.label + '<br><span style="font-size:16px;">' + ncell.icon + '</span></div>';
     },
 
     moveDir: function(dirKey, chapter) {
@@ -196,14 +186,16 @@ var Map = {
             return;
         }
 
-        // 检查是否被怪拦住
+        // 【关键修复】检查当前格子是否有未击败的怪——如果有，必须先击败才能离开
+        var curKey = pos.x + ',' + pos.y;
+        var curCell = chapter.cells[curKey];
         var defeated = Game.state.defeatedCells;
-        var isDefeated = false;
+        var curDefeated = false;
         for (var i = 0; i < defeated.length; i++) {
-            if (defeated[i] === key) { isDefeated = true; break; }
+            if (defeated[i] === curKey) { curDefeated = true; break; }
         }
-        if ((cell.type === 'battle' || cell.type === 'elite' || cell.type === 'boss') && !isDefeated) {
-            UI.showModal('遭遇敌人', '前方有 ' + (cell.desc || '敌人') + '，必须击败才能通过！');
+        if (curCell && (curCell.type === 'battle' || curCell.type === 'elite' || curCell.type === 'boss') && !curDefeated) {
+            UI.showModal('遭遇敌人', '这里有 ' + (curCell.desc || '敌人') + '，必须先击败它才能离开！');
             return;
         }
 
@@ -230,40 +222,47 @@ var Map = {
 
         if (!cell) return;
 
-        descEl.innerHTML = '<b>' + cell.icon + ' ' + (cell.type === 'start' ? '起点' : cell.type === 'boss' ? 'BOSS' : cell.type === 'battle' ? '战斗' : cell.type === 'elite' ? '精英' : cell.type === 'chest' ? '宝箱' : cell.type === 'npc' ? 'NPC' : '空地') + '</b><br>' + cell.desc;
+        var defeated = Game.state.defeatedCells;
+        var isDefeated = false;
+        for (var i = 0; i < defeated.length; i++) {
+            if (defeated[i] === key) { isDefeated = true; break; }
+        }
+        var isHostile = (cell.type === 'battle' || cell.type === 'elite' || cell.type === 'boss');
+        var isCleared = isHostile && isDefeated;
+
+        descEl.innerHTML = '<b>' + cell.icon + ' ' + (cell.type === 'start' ? '起点' : cell.type === 'boss' ? 'BOSS' : cell.type === 'battle' ? '战斗' : cell.type === 'elite' ? '精英' : cell.type === 'chest' ? '宝箱' : cell.type === 'npc' ? 'NPC' : '空地') + '</b><br>' + cell.desc + (isCleared ? '<br><br><i style="color:#6b8e6b">✓ 已清理</i>' : '');
 
         var actionsHtml = '';
 
-        switch (cell.type) {
-            case 'start':
-                actionsHtml = '<button onclick="Map.healAll()">休息恢复</button>';
-                break;
-            case 'empty':
-                actionsHtml = '';
-                break;
-            case 'battle':
-            case 'elite':
-                actionsHtml = '<button onclick="Map.startBattle(\'' + cell.enemy + '\', ' + (cell.count || 1) + ')">迎战</button>';
-                break;
-            case 'boss':
+        if (isHostile && !isDefeated) {
+            // 未击败的怪格子：只能迎战，不能移动
+            if (cell.type === 'boss') {
                 actionsHtml = '<button onclick="Map.startBossBattle()">挑战Boss</button>';
-                break;
-            case 'npc':
-                actionsHtml = '<button onclick="Map.talkNPC()">对话</button>';
-                break;
-            case 'chest':
-                actionsHtml = '<button onclick="Map.openCurrentChest()">打开</button>';
-                break;
-            case 'hidden':
-                if (Game.state.hero.luk >= 8) {
-                    actionsHtml = '<button onclick="Map.openCurrentChest()">探索</button>';
-                } else {
-                    descEl.innerHTML += '<br><br><i style="color:#999">（需要福气≥8才能发现隐藏内容）</i>';
-                }
-                break;
-            case 'recover':
-                actionsHtml = '<button onclick="Map.healAll()">恢复状态</button>';
-                break;
+            } else {
+                actionsHtml = '<button onclick="Map.startBattle(\'' + cell.enemy + '\', ' + (cell.count || 1) + ')">迎战</button>';
+            }
+        } else {
+            switch (cell.type) {
+                case 'start':
+                    actionsHtml = '<button onclick="Map.healAll()">休息恢复</button>';
+                    break;
+                case 'npc':
+                    actionsHtml = '<button onclick="Map.talkNPC()">对话</button>';
+                    break;
+                case 'chest':
+                    actionsHtml = '<button onclick="Map.openCurrentChest()">打开</button>';
+                    break;
+                case 'hidden':
+                    if (Game.state.hero.luk >= 8) {
+                        actionsHtml = '<button onclick="Map.openCurrentChest()">探索</button>';
+                    } else {
+                        descEl.innerHTML += '<br><br><i style="color:#999">（需要福气≥8才能发现隐藏内容）</i>';
+                    }
+                    break;
+                case 'recover':
+                    actionsHtml = '<button onclick="Map.healAll()">恢复状态</button>';
+                    break;
+            }
         }
 
         actionsHtml += '<button class="secondary" onclick="Map.toggleMapView()">查看全图</button>';

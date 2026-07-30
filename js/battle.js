@@ -1,8 +1,8 @@
-// ===== 战斗系统 =====
+// ===== 战斗系统（3×3 九宫格站位） =====
 // 【设计快照 2026-07-30】
-// 技能系统：每个单位有具体技能名称/消耗MP/CD/效果
-// 武将奥义需羁绊2级解锁，主角奥义从equippedUlt获取
-// 主角技能从equippedSkills获取，武将技能从template.skills获取
+// 双方各有 3×3 的站位区域
+// 敌方优先攻击我方最上面一排（y=0），我方优先攻击敌方最下面一排（y=2）
+// 每个单位有 _pos: {x, y}
 
 var Battle = {
     state: null,
@@ -10,12 +10,13 @@ var Battle = {
     auto: false,
     timer: null,
 
-    // 初始化战斗，准备玩家和敌方单位
+    // 初始化战斗
     start: function(enemyTemplate, count, options) {
         count = count || 1;
         options = options || {};
         var team = Game.state.team;
 
+        // --- 我方单位 ---
         var playerUnits = [];
         for (var i = 0; i < team.length; i++) {
             var u = team[i];
@@ -36,25 +37,22 @@ var Battle = {
             unit._crit = stats.crit;
             unit._dodge = stats.dodge;
             unit._ult = 0;
-            unit._skillCd = [0, 0]; // 两个技能的CD
+            unit._skillCd = [0, 0];
             unit._defending = false;
             unit._dead = false;
             unit._buffs = [];
             unit._debuffs = [];
-
-            // 准备战斗技能数据
             unit._battleSkills = this.getBattleSkills(u);
             unit._canUseUlt = this.canUseUlt(u);
-
+            // 站位：从 teamPositions 读取，无则默认放最下排
+            unit._pos = this.getPlayerPos(u.id, i, team.length);
             playerUnits.push(unit);
         }
 
-        // 应用阵型效果
+        // 应用阵型效果（基于位置）
         this.applyFormation(playerUnits);
 
-        var enemyUnits = [];
-        this.applyFormation(playerUnits);
-
+        // --- 敌方单位 ---
         var enemyUnits = [];
         for (var j = 0; j < count; j++) {
             var e = GAME_DATA.enemies[enemyTemplate];
@@ -79,12 +77,13 @@ var Battle = {
             eu._dead = false;
             eu._buffs = [];
             eu._debuffs = [];
-            // 敌人简化技能
             eu._battleSkills = [
                 { name: '猛击', cost: 20, cd: 3, dmg: 1.5 },
                 { name: '重击', cost: 30, cd: 4, dmg: 2.2 }
             ];
             eu._canUseUlt = true;
+            // 敌方站位：优先放最上排 y=0，从左到右
+            eu._pos = this.getEnemyPos(j, count);
             enemyUnits.push(eu);
         }
 
@@ -112,50 +111,74 @@ var Battle = {
         this.nextTurn();
     },
 
-    // ===== 阵型效果 =====
+    // 获取我方站位（从 teamPositions 配置或默认）
+    getPlayerPos: function(unitId, index, teamLen) {
+        var positions = Game.state.teamPositions || {};
+        if (positions[unitId]) {
+            return { x: positions[unitId].x, y: positions[unitId].y };
+        }
+        // 默认：最下排 y=2，主角居中 x=1
+        var defaults = [
+            { x: 1, y: 2 },
+            { x: 0, y: 2 },
+            { x: 2, y: 2 },
+            { x: 1, y: 1 }
+        ];
+        return defaults[index] || { x: 1, y: 1 };
+    },
+
+    // 获取敌方站位（优先最上排 y=0）
+    getEnemyPos: function(index, total) {
+        var slots = [
+            { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 },
+            { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 },
+            { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }
+        ];
+        return slots[index] || { x: 1, y: 1 };
+    },
+
+    // ===== 阵型效果（基于 3×3 位置） =====
     applyFormation: function(playerUnits) {
         var fid = Game.state.currentFormation || 'yulin';
         var f = GAME_DATA.formations[fid];
         if (!f) return;
         var eff = f.effect;
-        var len = playerUnits.length;
 
-        // 鱼鳞阵：前排(索引0)防御+25%
-        if (eff.frontDef && len > 0) {
-            playerUnits[0]._def = Math.floor(playerUnits[0]._def * (1 + eff.frontDef));
-        }
-        // 锋矢阵：首发(索引0)伤害+35% -> 攻击+35%
-        if (eff.firstDmg && len > 0) {
-            playerUnits[0]._atk = Math.floor(playerUnits[0]._atk * (1 + eff.firstDmg));
-        }
-        // 八卦阵：全体闪避+18%
-        if (eff.allDodge) {
-            for (var i = 0; i < len; i++) {
-                playerUnits[i]._dodge = Math.floor(playerUnits[i]._dodge + eff.allDodge * 100);
+        for (var i = 0; i < playerUnits.length; i++) {
+            var u = playerUnits[i];
+            var px = u._pos.x;
+            var py = u._pos.y;
+
+            // 鱼鳞阵：最前排(y=0)防御+25%
+            if (eff.frontDef && py === 0) {
+                u._def = Math.floor(u._def * (1 + eff.frontDef));
             }
-        }
-        // 偃月阵：两侧(索引1,2)攻击+10%
-        if (eff.sideDrain) {
-            if (len > 1) playerUnits[1]._atk = Math.floor(playerUnits[1]._atk * 1.1);
-            if (len > 2) playerUnits[2]._atk = Math.floor(playerUnits[2]._atk * 1.1);
-        }
-        // 雁行阵：后排(最后一个)攻击+15%
-        if (eff.backRange && len > 0) {
-            playerUnits[len - 1]._atk = Math.floor(playerUnits[len - 1]._atk * 1.15);
-        }
-        // 长蛇阵：全体速度+12%
-        if (eff.speed) {
-            for (var i = 0; i < len; i++) {
-                playerUnits[i]._spd = Math.floor(playerUnits[i]._spd * (1 + eff.speed));
+            // 锋矢阵：中间列(x=1)伤害+35%
+            if (eff.firstDmg && px === 1) {
+                u._atk = Math.floor(u._atk * (1 + eff.firstDmg));
+            }
+            // 八卦阵：全体闪避+18%
+            if (eff.allDodge) {
+                u._dodge = Math.floor(u._dodge + eff.allDodge * 100);
+            }
+            // 偃月阵：两侧列(x=0或2)攻击+10%
+            if (eff.sideDrain && (px === 0 || px === 2)) {
+                u._atk = Math.floor(u._atk * 1.1);
+            }
+            // 雁行阵：最后排(y=2)攻击+15%
+            if (eff.backRange && py === 2) {
+                u._atk = Math.floor(u._atk * 1.15);
+            }
+            // 长蛇阵：全体速度+12%
+            if (eff.speed) {
+                u._spd = Math.floor(u._spd * (1 + eff.speed));
             }
         }
     },
 
-    // 获取单位的战斗技能（2个）
     getBattleSkills: function(unit) {
         var skills = [];
         if (unit.isHero) {
-            // 主角：从equippedSkills获取
             for (var i = 0; i < unit.equippedSkills.length; i++) {
                 var sid = unit.equippedSkills[i];
                 if (!sid) continue;
@@ -167,24 +190,20 @@ var Battle = {
                 }
             }
         } else {
-            // 武将：从template.skills获取s1和s2
             if (unit.skills && unit.skills.s1) skills.push(unit.skills.s1);
             if (unit.skills && unit.skills.s2) skills.push(unit.skills.s2);
         }
         return skills;
     },
 
-    // 检查单位是否可以使用奥义
     canUseUlt: function(unit) {
         if (unit.isHero) {
             return !!unit.equippedUlt;
         } else {
-            // 武将需羁绊2级
             return (unit.bondLevel || 0) >= 2;
         }
     },
 
-    // 获取单位的奥义数据
     getUlt: function(unit) {
         if (unit.isHero) {
             if (!unit.equippedUlt) return null;
@@ -228,7 +247,6 @@ var Battle = {
                 if (Game.state.currentFormation === 'changs' && u._side === 'player') {
                     u._mp = Math.min(u._maxMp, u._mp + 10);
                 }
-            }
             }
             this.calcActionOrder();
         }
@@ -287,6 +305,28 @@ var Battle = {
         }
     },
 
+    // ===== 目标选择逻辑 =====
+    // side: 要找的目标方  preference: 'front'优先前排(y小) 'back'优先后排(y大)
+    pickTarget: function(side, preference) {
+        var s = this.state;
+        var targets = side === 'player' ? s.playerUnits : s.enemyUnits;
+        var alive = [];
+        for (var i = 0; i < targets.length; i++) {
+            if (!targets[i]._dead) alive.push(targets[i]);
+        }
+        if (alive.length === 0) return null;
+
+        // 按偏好排序
+        alive.sort(function(a, b) {
+            if (preference === 'front') {
+                return a._pos.y - b._pos.y; // y小优先
+            } else {
+                return b._pos.y - a._pos.y; // y大优先
+            }
+        });
+        return alive[0];
+    },
+
     playerAction: function(action, targetIndex) {
         if (!this.state || !this.state.playerTurn) return;
         var unit = this.state.currentUnit;
@@ -317,21 +357,29 @@ var Battle = {
 
     doAttack: function(attacker, targetIndex) {
         var s = this.state;
+        // 玩家打敌方：优先最下排；敌方打玩家：优先最上排
+        var preference = attacker._side === 'player' ? 'back' : 'front';
         var targets = attacker._side === 'player' ? s.enemyUnits : s.playerUnits;
-        var aliveTargets = [];
-        for (var i = 0; i < targets.length; i++) {
-            if (!targets[i]._dead) aliveTargets.push(targets[i]);
+
+        var target;
+        if (targetIndex !== null && targetIndex !== undefined) {
+            // 尝试用索引选
+            var aliveTargets = [];
+            for (var i = 0; i < targets.length; i++) {
+                if (!targets[i]._dead) aliveTargets.push(targets[i]);
+            }
+            if (targetIndex < aliveTargets.length) {
+                target = aliveTargets[targetIndex];
+            }
         }
-        if (aliveTargets.length === 0) {
+        if (!target) {
+            target = this.pickTarget(attacker._side === 'player' ? 'enemy' : 'player', preference);
+        }
+        if (!target) {
             this.nextTurn();
             return;
         }
-        var target;
-        if (targetIndex !== null && targetIndex !== undefined && targetIndex < aliveTargets.length) {
-            target = aliveTargets[targetIndex];
-        } else {
-            target = aliveTargets[rand(0, aliveTargets.length - 1)];
-        }
+
         var dmg = Math.max(1, attacker._atk - target._def);
         var isCrit = rand(1, 100) <= attacker._crit;
         if (isCrit) dmg = Math.floor(dmg * 1.5);
@@ -373,19 +421,13 @@ var Battle = {
         unit._mp -= skill.cost;
         unit._skillCd[skillIndex] = skill.cd;
 
-        var s = this.state;
-        var targets = unit._side === 'player' ? s.enemyUnits : s.playerUnits;
-        var aliveTargets = [];
-        for (var i = 0; i < targets.length; i++) {
-            if (!targets[i]._dead) aliveTargets.push(targets[i]);
-        }
-        if (aliveTargets.length === 0) {
+        var preference = unit._side === 'player' ? 'back' : 'front';
+        var target = this.pickTarget(unit._side === 'player' ? 'enemy' : 'player', preference);
+        if (!target) {
             this.nextTurn();
             return;
         }
 
-        // 简化处理：所有技能目前统一为单体伤害（后续可按effect扩展）
-        var target = aliveTargets[rand(0, aliveTargets.length - 1)];
         var dmgMult = skill.effect && skill.effect.dmg ? skill.effect.dmg : 1.5;
         var dmg = Math.max(1, Math.floor(unit._atk * dmgMult - target._def));
         target._hp = Math.max(0, target._hp - dmg);
@@ -419,6 +461,7 @@ var Battle = {
         }
 
         unit._ult = 0;
+        var preference = unit._side === 'player' ? 'back' : 'front';
         var s = this.state;
         var targets = unit._side === 'player' ? s.enemyUnits : s.playerUnits;
         var aliveTargets = [];
@@ -449,7 +492,8 @@ var Battle = {
                 }
             }
         } else {
-            var target = aliveTargets[rand(0, aliveTargets.length - 1)];
+            var target = this.pickTarget(unit._side === 'player' ? 'enemy' : 'player', preference);
+            if (!target) target = aliveTargets[rand(0, aliveTargets.length - 1)];
             var dmg = Math.max(1, Math.floor(unit._atk * ultDmg * 1.5 - target._def));
             target._hp = Math.max(0, target._hp - dmg);
             this.addLog('对 ' + target.name + ' 造成 <span class="log-damage">' + dmg + '</span> 伤害', 'damage');
@@ -611,78 +655,23 @@ var Battle = {
         }
         this.state = null;
     },
-        document.getElementById('battle-result').classList.remove('active');
-        if (this.state.result === 'win') {
-            var si = Game.state.gridIndex;
-            var found = false;
-            for (var i = 0; i < Game.state.visitedGrids.length; i++) {
-                if (Game.state.visitedGrids[i] === si) { found = true; break; }
-            }
-            if (!found) Game.state.visitedGrids.push(si);
 
-            var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
-            if (chapter && si === chapter.grids.length - 1) {
-                Game.state.chapter++;
-                Game.state.stage = 0;
-                Game.state.gridIndex = 0;
-                Game.state.visitedGrids = [];
-                UI.showModal('章节通关！', '恭喜通关<b>' + chapter.name + '</b>！<br><br>下一章已解锁。');
-            }
-            Game.saveGame();
-            Game.toScreen('map');
-            Map.init();
-        } else {
-            for (var i = 0; i < Game.state.team.length; i++) {
-                var u = Game.state.team[i];
-                var stats = calcStats(u);
-                u.hp = Math.floor(stats.maxHp * 0.3);
-                u.mp = Math.floor(stats.maxMp * 0.3);
-            }
-            UI.showModal('战斗失败', '你败下阵来，但保住了性命。<br><br>休息后再次挑战吧。');
-            Game.toScreen('map');
-            Map.init();
-        }
-        this.state = null;
-    },
-
+    // ===== 九宫格渲染 =====
     render: function() {
         if (!this.state) return;
         var s = this.state;
         document.getElementById('battle-round').textContent = s.round;
         document.getElementById('battle-speed').textContent = this.speed;
 
-        var enemyHtml = '';
-        for (var i = 0; i < s.enemyUnits.length; i++) {
-            var u = s.enemyUnits[i];
-            var hpPct = u._dead ? 0 : (u._hp / u._maxHp * 100);
-            var isActive = s.currentUnit === u ? 'active' : '';
-            var deadClass = u._dead ? 'dead' : '';
-            enemyHtml += '<div class="battle-unit ' + deadClass + ' ' + isActive + '" onclick="Battle.selectTarget(' + i + ')">' +
-                '<div class="unit-avatar">' + (u.avatar || '👤') + '</div>' +
-                '<div class="unit-name">' + u.name + '</div>' +
-                '<div class="unit-hp-bar"><div class="unit-hp-fill" style="width:' + hpPct + '%"></div></div>' +
-                '<div class="unit-hp-text">' + (u._dead ? '0' : Math.floor(u._hp)) + '/' + u._maxHp + '</div>' +
-            '</div>';
-        }
+        // 渲染敌方 3×3
+        var enemyHtml = this.renderGrid(s.enemyUnits, 'enemy');
         document.getElementById('enemy-side').innerHTML = enemyHtml;
 
-        var playerHtml = '';
-        for (var i = 0; i < s.playerUnits.length; i++) {
-            var u = s.playerUnits[i];
-            var hpPct = u._dead ? 0 : (u._hp / u._maxHp * 100);
-            var ultPct = Math.min(100, u._ult);
-            var isActive = s.currentUnit === u ? 'active' : '';
-            var deadClass = u._dead ? 'dead' : '';
-            playerHtml += '<div class="battle-unit ' + deadClass + ' ' + isActive + '">' +
-                '<div class="unit-avatar">' + (u.avatar || '🎭') + '</div>' +
-                '<div class="unit-name">' + u.name + '</div>' +
-                '<div class="unit-hp-bar"><div class="unit-hp-fill" style="width:' + hpPct + '%"></div></div>' +
-                '<div class="unit-hp-text">' + (u._dead ? '0' : Math.floor(u._hp)) + '/' + u._maxHp + '</div>' +
-                '<div class="unit-ult-bar"><div class="unit-ult-fill" style="width:' + ultPct + '%"></div></div>' +
-            '</div>';
-        }
+        // 渲染我方 3×3
+        var playerHtml = this.renderGrid(s.playerUnits, 'player');
         document.getElementById('player-side').innerHTML = playerHtml;
 
+        // 渲染操作按钮
         if (s.playerTurn && s.currentUnit && !s.currentUnit._dead) {
             var unit = s.currentUnit;
             document.getElementById('battle-controls').style.display = 'block';
@@ -715,8 +704,47 @@ var Battle = {
         }
     },
 
+    // 渲染 3×3 网格
+    renderGrid: function(units, side) {
+        // 建立 posKey -> unit 映射
+        var posMap = {};
+        for (var i = 0; i < units.length; i++) {
+            var u = units[i];
+            if (!u._pos) continue;
+            var key = u._pos.x + ',' + u._pos.y;
+            posMap[key] = u;
+        }
+
+        var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
+        for (var y = 0; y < 3; y++) {
+            for (var x = 0; x < 3; x++) {
+                var key = x + ',' + y;
+                var u = posMap[key];
+                if (u) {
+                    var hpPct = u._dead ? 0 : (u._hp / u._maxHp * 100);
+                    var ultPct = Math.min(100, u._ult || 0);
+                    var isActive = this.state.currentUnit === u ? 'active' : '';
+                    var deadClass = u._dead ? 'dead' : '';
+                    html += '<div class="battle-unit ' + deadClass + ' ' + isActive + '" ' +
+                        (side === 'enemy' && !u._dead ? 'onclick="Battle.selectTarget(' + u._index + ')"' : '') + '>' +
+                        '<div class="unit-avatar">' + (u.avatar || (side === 'player' ? '🎭' : '👤')) + '</div>' +
+                        '<div class="unit-name">' + u.name + '</div>' +
+                        '<div class="unit-hp-bar"><div class="unit-hp-fill" style="width:' + hpPct + '%"></div></div>' +
+                        '<div class="unit-hp-text">' + (u._dead ? '0' : Math.floor(u._hp)) + '/' + u._maxHp + '</div>' +
+                        (side === 'player' ? '<div class="unit-ult-bar"><div class="unit-ult-fill" style="width:' + ultPct + '%"></div></div>' : '') +
+                    '</div>';
+                } else {
+                    html += '<div style="min-height:80px;border:1px dashed #444;border-radius:6px;background:rgba(0,0,0,0.2);"></div>';
+                }
+            }
+        }
+        html += '</div>';
+        return html;
+    },
+
     selectTarget: function(index) {
         if (!this.state || !this.state.playerTurn) return;
+        // 暂时不实现手动选目标，自动选择
     },
 
     addLog: function(text, type) {

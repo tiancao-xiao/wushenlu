@@ -76,6 +76,44 @@ var UI = {
             '</div>';
         }
 
+        html += '<h4 style="margin:20px 0 10px;color:#5a4a3a;">阵型站位（3×3）</h4>';
+        html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">';
+        var positions = Game.state.teamPositions || {};
+        var posToHero = {};
+        for (var hid in positions) {
+            if (!positions.hasOwnProperty(hid)) continue;
+            var pk = positions[hid].x + ',' + positions[hid].y;
+            posToHero[pk] = hid;
+        }
+        for (var py = 0; py < 3; py++) {
+            for (var px = 0; px < 3; px++) {
+                var pk2 = px + ',' + py;
+                var placedId = posToHero[pk2];
+                if (placedId) {
+                    var pu = null;
+                    for (var ti = 0; ti < Game.state.team.length; ti++) {
+                        if (Game.state.team[ti].id === placedId) { pu = Game.state.team[ti]; break; }
+                    }
+                    if (pu) {
+                        html += '<div style="border:1px solid #555;border-radius:6px;padding:6px;text-align:center;background:#2a2520;">' +
+                            '<div style="font-size:24px;">' + (pu.avatar || '👤') + '</div>' +
+                            '<div style="font-size:11px;color:#ccc;">' + pu.name + '</div>' +
+                            '<button style="font-size:10px;padding:2px 6px;margin-top:2px;" onclick="UI.removeTeamPosition(\'' + placedId + '\')">移除</button>' +
+                        '</div>';
+                    } else {
+                        html += '<div style="border:1px dashed #444;border-radius:6px;padding:6px;text-align:center;color:#666;">空位</div>';
+                    }
+                } else {
+                    html += '<div style="border:1px dashed #444;border-radius:6px;padding:6px;text-align:center;color:#666;cursor:pointer;" onclick="UI.showPlaceHeroModal(' + px + ',' + py + ')">' +
+                        '<div style="font-size:20px;">+</div>' +
+                        '<div style="font-size:10px;">点击放置</div>' +
+                    '</div>';
+                }
+            }
+        }
+        html += '</div>';
+        html += '<p style="font-size:12px;color:#999;margin-bottom:12px;">前排(y=0)先挨打，后排(y=2)相对安全。敌方优先攻击我方最上面一排。</p>';
+
         var otherHeroes = [];
         for (var k = 0; k < Game.state.unlockedHeroes.length; k++) {
             if (teamIds.indexOf(Game.state.unlockedHeroes[k]) === -1) {
@@ -133,6 +171,53 @@ var UI = {
         Game.state.currentFormation = fid;
         Game.saveGame();
         this.renderHeroes();
+    },
+
+    // ===== 站位配置 =====
+    showPlaceHeroModal: function(x, y) {
+        var positions = Game.state.teamPositions || {};
+        var placedIds = {};
+        for (var hid in positions) {
+            if (positions.hasOwnProperty(hid)) placedIds[hid] = true;
+        }
+        var unplaced = [];
+        for (var i = 0; i < Game.state.team.length; i++) {
+            var t = Game.state.team[i];
+            if (!placedIds[t.id]) unplaced.push(t);
+        }
+        if (unplaced.length === 0) {
+            UI.showModal('提示', '所有武将都已放置，如需调整请先移除。');
+            return;
+        }
+        var content = '选择要放置在 (' + x + ',' + y + ') 的武将：<br><br>';
+        for (var j = 0; j < unplaced.length; j++) {
+            var u = unplaced[j];
+            content += '<button style="margin:4px;padding:8px 12px;" onclick="UI.closeModal();UI.setTeamPosition(\'' + u.id + '\',' + x + ',' + y + ')">' + (u.avatar || '👤') + ' ' + u.name + '</button>';
+        }
+        UI.showModal('选择武将', content);
+    },
+
+    setTeamPosition: function(heroId, x, y) {
+        if (!Game.state.teamPositions) Game.state.teamPositions = {};
+        for (var hid in Game.state.teamPositions) {
+            if (!Game.state.teamPositions.hasOwnProperty(hid)) continue;
+            var p = Game.state.teamPositions[hid];
+            if (p.x === x && p.y === y) {
+                delete Game.state.teamPositions[hid];
+                break;
+            }
+        }
+        Game.state.teamPositions[heroId] = { x: x, y: y };
+        Game.saveGame();
+        this.renderHeroes();
+    },
+
+    removeTeamPosition: function(heroId) {
+        if (Game.state.teamPositions && Game.state.teamPositions[heroId]) {
+            delete Game.state.teamPositions[heroId];
+            Game.saveGame();
+            this.renderHeroes();
+        }
     },
 
     // ===== 背包界面 =====
