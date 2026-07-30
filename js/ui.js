@@ -462,6 +462,52 @@ var UI = {
         for (var i = 0; i < Game.state.quests.length; i++) {
             var q = Game.state.quests[i];
             var completed = q.completed || false;
+            var sourceText = '';
+            if (q.npc && q.chapter) {
+                var npcNames = { cunmin: '村民', tiejiang: '老铁匠', caocao: '曹操', yuanshao: '袁绍' };
+                sourceText = '<div class="task-source">📍 第' + q.chapter + '章 - ' + (npcNames[q.npc] || q.npc) + '</div>';
+            }
+
+            // 进度显示
+            var progressText = '';
+            if (!completed && q.target) {
+                if (q.target.kill) {
+                    progressText = '<div class="task-progress">进度: ' + (q.progress || 0) + '/' + q.target.count + '</div>';
+                } else if (q.target.item) {
+                    var have = Game.state.hero.inventory[q.target.item] || 0;
+                    progressText = '<div class="task-progress">持有: ' + have + '/' + q.target.count + '</div>';
+                }
+            }
+
+            html += '<div class="task-item ' + (completed ? 'completed' : '') + '">' +
+                sourceText +
+                '<div class="task-title">' +
+                    '<span>' + q.name + '</span>' +
+                '</div>' +
+                '<div class="task-desc">' + q.desc + '</div>' +
+                progressText +
+                '<div class="task-reward">' +
+                    '奖励: ' + (q.reward.exp ? '经验+' + q.reward.exp : '') + ' ' +
+                    (q.reward.silver ? '银两+' + q.reward.silver : '') +
+                '</div>' +
+            '</div>';
+        }
+
+        if (html === '') {
+            html = '<div style="text-align:center;color:#999;padding:40px;">暂无任务</div>';
+        }
+
+        list.innerHTML = html;
+    },
+    renderTasks: function() {
+        if (!Game.state) return;
+        var list = document.getElementById('task-list');
+        if (!list) return;
+
+        var html = '';
+        for (var i = 0; i < Game.state.quests.length; i++) {
+            var q = Game.state.quests[i];
+            var completed = q.completed || false;
             html += '<div class="task-item ' + (completed ? 'completed' : '') + '">' +
                 '<div class="task-title">' +
                     '<span>' + q.name + '</span>' +

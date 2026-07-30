@@ -387,6 +387,12 @@ var GAME_DATA = {
     },
 
     // ===== 任务 =====
+    // npc: 发布任务的NPC标识，chapter: 所在章节
+    quests: [
+        { id: 'q_kill_huangjin', name: '清缴黄巾', type: 'sub', desc: '击杀黄巾兵×20', npc: 'cunmin', chapter: 1, target: { kill: 'huangjin_bing', count: 20 }, reward: { exp: 500, silver: 1000 } },
+        { id: 'q_collect_herb', name: '采集草药', type: 'sub', desc: '提交草药×15', npc: 'cunmin', chapter: 1, target: { item: 'caoyao', count: 15 }, reward: { exp: 300, items: ['jinchuang:5'] } },
+        { id: 'q_forge_first', name: '初次锻造', type: 'sub', desc: '在铁匠铺锻造任意兵器', npc: 'tiejiang', chapter: 1, target: { forge: 1 }, reward: { exp: 200, silver: 500 } }
+    ],
     quests: [
         { id: 'q_kill_huangjin', name: '清缴黄巾', type: 'sub', desc: '击杀黄巾兵×20', target: { kill: 'huangjin_bing', count: 20 }, reward: { exp: 500, silver: 1000 } },
         { id: 'q_collect_herb', name: '采集草药', type: 'sub', desc: '提交草药×15', target: { item: 'caoyao', count: 15 }, reward: { exp: 300, items: ['jinchuang:5'] } },

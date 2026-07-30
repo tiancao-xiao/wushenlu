@@ -1,8 +1,8 @@
 // ===== 战斗系统（3×3 九宫格站位） =====
 // 【设计快照 2026-07-30】
-// 双方各有 3×3 的站位区域
-// 敌方优先攻击我方最上面一排（y=0），我方优先攻击敌方最下面一排（y=2）
-// 每个单位有 _pos: {x, y}
+// 修复：useSkill/useUlt 提前return未调用nextTurn导致卡死
+// 优化：目标选择逻辑——优先前排→同列→最近列→先左后右
+// 新增：伤害飘字效果
 
 var Battle = {
     state: null,
@@ -44,12 +44,11 @@ var Battle = {
             unit._debuffs = [];
             unit._battleSkills = this.getBattleSkills(u);
             unit._canUseUlt = this.canUseUlt(u);
-            // 站位：从 teamPositions 读取，无则默认放最下排
             unit._pos = this.getPlayerPos(u.id, i, team.length);
             playerUnits.push(unit);
         }
 
-        // 应用阵型效果（基于位置）
+        // 应用阵型效果
         this.applyFormation(playerUnits);
 
         // --- 敌方单位 ---
@@ -82,7 +81,8 @@ var Battle = {
                 { name: '重击', cost: 30, cd: 4, dmg: 2.2 }
             ];
             eu._canUseUlt = true;
-            // 敌方站位：优先放最上排 y=0，从左到右
+            eu.id = enemyTemplate;
+            eu._pos = this.getEnemyPos(j, count);
             eu._pos = this.getEnemyPos(j, count);
             enemyUnits.push(eu);
         }
@@ -102,7 +102,8 @@ var Battle = {
             playerTurn: false,
             result: null,
             log: [],
-            options: options
+            options: options,
+            floatingTexts: []
         };
 
         this.calcActionOrder();
@@ -111,23 +112,17 @@ var Battle = {
         this.nextTurn();
     },
 
-    // 获取我方站位（从 teamPositions 配置或默认）
     getPlayerPos: function(unitId, index, teamLen) {
         var positions = Game.state.teamPositions || {};
         if (positions[unitId]) {
             return { x: positions[unitId].x, y: positions[unitId].y };
         }
-        // 默认：最下排 y=2，主角居中 x=1
         var defaults = [
-            { x: 1, y: 2 },
-            { x: 0, y: 2 },
-            { x: 2, y: 2 },
-            { x: 1, y: 1 }
+            { x: 1, y: 2 }, { x: 0, y: 2 }, { x: 2, y: 2 }, { x: 1, y: 1 }
         ];
         return defaults[index] || { x: 1, y: 1 };
     },
 
-    // 获取敌方站位（优先最上排 y=0）
     getEnemyPos: function(index, total) {
         var slots = [
             { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 },
@@ -137,7 +132,6 @@ var Battle = {
         return slots[index] || { x: 1, y: 1 };
     },
 
-    // ===== 阵型效果（基于 3×3 位置） =====
     applyFormation: function(playerUnits) {
         var fid = Game.state.currentFormation || 'yulin';
         var f = GAME_DATA.formations[fid];
@@ -149,27 +143,21 @@ var Battle = {
             var px = u._pos.x;
             var py = u._pos.y;
 
-            // 鱼鳞阵：最前排(y=0)防御+25%
             if (eff.frontDef && py === 0) {
                 u._def = Math.floor(u._def * (1 + eff.frontDef));
             }
-            // 锋矢阵：中间列(x=1)伤害+35%
             if (eff.firstDmg && px === 1) {
                 u._atk = Math.floor(u._atk * (1 + eff.firstDmg));
             }
-            // 八卦阵：全体闪避+18%
             if (eff.allDodge) {
                 u._dodge = Math.floor(u._dodge + eff.allDodge * 100);
             }
-            // 偃月阵：两侧列(x=0或2)攻击+10%
             if (eff.sideDrain && (px === 0 || px === 2)) {
                 u._atk = Math.floor(u._atk * 1.1);
             }
-            // 雁行阵：最后排(y=2)攻击+15%
             if (eff.backRange && py === 2) {
                 u._atk = Math.floor(u._atk * 1.15);
             }
-            // 长蛇阵：全体速度+12%
             if (eff.speed) {
                 u._spd = Math.floor(u._spd * (1 + eff.speed));
             }
@@ -243,7 +231,6 @@ var Battle = {
                     u._skillCd[1] = Math.max(0, u._skillCd[1] - 1);
                 }
                 u._defending = false;
-                // 长蛇阵每回合回蓝10
                 if (Game.state.currentFormation === 'changs' && u._side === 'player') {
                     u._mp = Math.min(u._maxMp, u._mp + 10);
                 }
@@ -287,6 +274,7 @@ var Battle = {
             if (bleed) {
                 var dmg = Math.floor(u._maxHp * bleed.value);
                 u._hp = Math.max(1, u._hp - dmg);
+                this.addFloatingText(u, dmg, 'damage');
                 this.addLog(u.name + ' 受到 <span class="log-damage">' + dmg + '</span> 流血伤害', 'damage');
                 bleed.turns--;
                 if (bleed.turns <= 0) {
@@ -305,26 +293,46 @@ var Battle = {
         }
     },
 
-    // ===== 目标选择逻辑 =====
-    // side: 要找的目标方  preference: 'front'优先前排(y小) 'back'优先后排(y大)
-    pickTarget: function(side, preference) {
+    // ===== 智能目标选择 =====
+    // 1. 优先攻击第一排（敌方y=0，我方y=2）
+    // 2. 同排优先同列
+    // 3. 然后离自己列最近的一列
+    // 4. 距离相同先左后右（x小的优先）
+    pickTargetSmart: function(attacker) {
         var s = this.state;
-        var targets = side === 'player' ? s.playerUnits : s.enemyUnits;
+        var targets = attacker._side === 'player' ? s.enemyUnits : s.playerUnits;
         var alive = [];
         for (var i = 0; i < targets.length; i++) {
             if (!targets[i]._dead) alive.push(targets[i]);
         }
         if (alive.length === 0) return null;
 
-        // 按偏好排序
+        // 玩家打敌方：优先 y 最大（敌方最下排 y=2）
+        // 敌方打玩家：优先 y 最小（我方最上排 y=0）
+        var preferLargeY = attacker._side === 'player';
+
+        // 1. 按 y 优先排序
         alive.sort(function(a, b) {
-            if (preference === 'front') {
-                return a._pos.y - b._pos.y; // y小优先
-            } else {
-                return b._pos.y - a._pos.y; // y大优先
-            }
+            return preferLargeY ? (b._pos.y - a._pos.y) : (a._pos.y - b._pos.y);
         });
-        return alive[0];
+
+        // 2. 找出最优先的 y
+        var bestY = alive[0]._pos.y;
+        var sameY = [];
+        for (var i = 0; i < alive.length; i++) {
+            if (alive[i]._pos.y === bestY) sameY.push(alive[i]);
+        }
+
+        // 3. 同一 y 中，按与攻击者 x 的距离排序，距离相同 x 小的优先（先左后右）
+        var ax = attacker._pos ? attacker._pos.x : 1;
+        sameY.sort(function(a, b) {
+            var da = Math.abs(a._pos.x - ax);
+            var db = Math.abs(b._pos.x - ax);
+            if (da !== db) return da - db;
+            return a._pos.x - b._pos.x;
+        });
+
+        return sameY[0];
     },
 
     playerAction: function(action, targetIndex) {
@@ -341,10 +349,11 @@ var Battle = {
             if (Game.consumeItem('jinchuang', 1)) {
                 var heal = Math.floor(unit._maxHp * 0.3);
                 unit._hp = Math.min(unit._maxHp, unit._hp + heal);
+                this.addFloatingText(unit, heal, 'heal');
                 this.addLog(unit.name + ' 使用了金疮药，恢复 <span class="log-heal">' + heal + '</span> HP', 'heal');
             } else {
                 this.addLog('没有可用的金疮药！', 'skill');
-                return;
+                return; // 玩家回合，提示后让玩家继续操作
             }
             this.nextTurn();
         } else if (action.indexOf('skill') === 0) {
@@ -357,13 +366,10 @@ var Battle = {
 
     doAttack: function(attacker, targetIndex) {
         var s = this.state;
-        // 玩家打敌方：优先最下排；敌方打玩家：优先最上排
-        var preference = attacker._side === 'player' ? 'back' : 'front';
         var targets = attacker._side === 'player' ? s.enemyUnits : s.playerUnits;
 
         var target;
         if (targetIndex !== null && targetIndex !== undefined) {
-            // 尝试用索引选
             var aliveTargets = [];
             for (var i = 0; i < targets.length; i++) {
                 if (!targets[i]._dead) aliveTargets.push(targets[i]);
@@ -373,7 +379,7 @@ var Battle = {
             }
         }
         if (!target) {
-            target = this.pickTarget(attacker._side === 'player' ? 'enemy' : 'player', preference);
+            target = this.pickTargetSmart(attacker);
         }
         if (!target) {
             this.nextTurn();
@@ -386,9 +392,11 @@ var Battle = {
         if (target._defending) dmg = Math.floor(dmg * 0.5);
         var isDodge = rand(1, 100) <= target._dodge;
         if (isDodge) {
+            this.addFloatingText(target, '闪避', 'miss');
             this.addLog(target.name + ' 闪避了攻击！', 'skill');
         } else {
             target._hp = Math.max(0, target._hp - dmg);
+            this.addFloatingText(target, dmg, isCrit ? 'crit' : 'damage');
             var critText = isCrit ? ' <b>暴击！</b>' : '';
             this.addLog(attacker.name + ' 攻击 ' + target.name + '，造成 <span class="log-damage">' + dmg + '</span> 伤害' + critText, 'damage');
             attacker._ult = Math.min(100, attacker._ult + 5);
@@ -406,23 +414,34 @@ var Battle = {
         }
     },
 
+    // ===== 技能释放（修复卡死：AI调用时提前return必须nextTurn） =====
     useSkill: function(unit, skillIndex) {
+        var isAI = unit._side === 'enemy' || (this.state && !this.state.playerTurn);
         var skills = unit._battleSkills;
-        if (!skills || skillIndex >= skills.length) return;
-        if (unit._skillCd[skillIndex] > 0) return;
+        if (!skills || skillIndex >= skills.length) {
+            if (isAI) this.nextTurn();
+            return;
+        }
+        if (unit._skillCd[skillIndex] > 0) {
+            if (isAI) this.nextTurn();
+            return;
+        }
 
         var skill = skills[skillIndex];
-        if (!skill) return;
+        if (!skill) {
+            if (isAI) this.nextTurn();
+            return;
+        }
 
         if (unit._mp < skill.cost) {
             this.addLog('内力不足！' + skill.name + '需要' + skill.cost + 'MP', 'skill');
+            if (isAI) this.nextTurn();
             return;
         }
         unit._mp -= skill.cost;
         unit._skillCd[skillIndex] = skill.cd;
 
-        var preference = unit._side === 'player' ? 'back' : 'front';
-        var target = this.pickTarget(unit._side === 'player' ? 'enemy' : 'player', preference);
+        var target = this.pickTargetSmart(unit);
         if (!target) {
             this.nextTurn();
             return;
@@ -432,6 +451,7 @@ var Battle = {
         var dmg = Math.max(1, Math.floor(unit._atk * dmgMult - target._def));
         target._hp = Math.max(0, target._hp - dmg);
 
+        this.addFloatingText(target, dmg, 'skill');
         this.addLog(unit.name + ' 释放 <span class="log-skill">' + skill.name + '</span>，对 ' + target.name + ' 造成 <span class="log-damage">' + dmg + '</span> 伤害', 'skill');
         unit._ult = Math.min(100, unit._ult + 10);
         if (target._hp <= 0) {
@@ -447,21 +467,27 @@ var Battle = {
         }
     },
 
+    // ===== 奥义释放（同样修复卡死） =====
     useUlt: function(unit) {
-        if (unit._ult < 100) return;
+        var isAI = unit._side === 'enemy' || (this.state && !this.state.playerTurn);
+        if (unit._ult < 100) {
+            if (isAI) this.nextTurn();
+            return;
+        }
         if (!unit._canUseUlt) {
             this.addLog('奥义未解锁！', 'skill');
+            if (isAI) this.nextTurn();
             return;
         }
 
         var ult = this.getUlt(unit);
         if (!ult) {
             this.addLog('没有可用的奥义！', 'skill');
+            if (isAI) this.nextTurn();
             return;
         }
 
         unit._ult = 0;
-        var preference = unit._side === 'player' ? 'back' : 'front';
         var s = this.state;
         var targets = unit._side === 'player' ? s.enemyUnits : s.playerUnits;
         var aliveTargets = [];
@@ -478,13 +504,13 @@ var Battle = {
 
         this.addLog(unit.name + ' 释放 <span class="log-ult">奥义·' + ult.name + '</span>！', 'ult');
 
-        // 简化：奥义对全体或单体高伤害
         var isAoe = rand(0, 1) === 1;
         if (isAoe && aliveTargets.length > 1) {
             for (var j = 0; j < aliveTargets.length; j++) {
                 var t = aliveTargets[j];
                 var dmg = Math.max(1, Math.floor(unit._atk * ultDmg - t._def));
                 t._hp = Math.max(0, t._hp - dmg);
+                this.addFloatingText(t, dmg, 'ult');
                 this.addLog('对 ' + t.name + ' 造成 <span class="log-damage">' + dmg + '</span> 伤害', 'damage');
                 if (t._hp <= 0) {
                     t._dead = true;
@@ -492,10 +518,11 @@ var Battle = {
                 }
             }
         } else {
-            var target = this.pickTarget(unit._side === 'player' ? 'enemy' : 'player', preference);
+            var target = this.pickTargetSmart(unit);
             if (!target) target = aliveTargets[rand(0, aliveTargets.length - 1)];
             var dmg = Math.max(1, Math.floor(unit._atk * ultDmg * 1.5 - target._def));
             target._hp = Math.max(0, target._hp - dmg);
+            this.addFloatingText(target, dmg, 'ult');
             this.addLog('对 ' + target.name + ' 造成 <span class="log-damage">' + dmg + '</span> 伤害', 'damage');
             if (target._hp <= 0) {
                 target._dead = true;
@@ -607,12 +634,18 @@ var Battle = {
                 }
             }
 
+            // 追踪击杀任务
+            if (enemy && enemy.id) {
+                Game.trackKill(enemy.id);
+            }
+
             for (var i = 0; i < Game.state.team.length; i++) {
                 var u = Game.state.team[i];
                 if (!u._dead) Game.gainExp(u, exp);
             }
             Game.addSilver(silver);
         }
+
 
         document.getElementById('result-rewards').innerHTML = rewardsHtml;
         document.getElementById('battle-result').classList.add('active');
@@ -621,14 +654,12 @@ var Battle = {
     endBattle: function() {
         document.getElementById('battle-result').classList.remove('active');
         if (this.state.result === 'win') {
-            // 标记当前战斗格子为已击败
             if (this.state.options.cellKey) {
                 Map.markDefeated(this.state.options.cellKey);
             }
 
             var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
             var pos = Game.state.currentPos;
-            // 检查是否到达出口
             if (chapter && pos.x === chapter.exitPos.x && pos.y === chapter.exitPos.y) {
                 Game.state.chapter++;
                 var nextChapter = GAME_DATA.chapters[Game.state.chapter - 1];
@@ -656,6 +687,27 @@ var Battle = {
         this.state = null;
     },
 
+    // ===== 飘字系统 =====
+    addFloatingText: function(target, value, type) {
+        if (!this.state || !target || !target._pos) return;
+        var text = value;
+        var color = '#ff6b6b';
+        if (type === 'heal') color = '#6bff8a';
+        else if (type === 'crit') { color = '#ff9f40'; text = value + '!'; }
+        else if (type === 'ult') color = '#d4a843';
+        else if (type === 'miss') color = '#aaa';
+        else if (type === 'skill') color = '#7ab8ff';
+
+        this.state.floatingTexts.push({
+            x: target._pos.x,
+            y: target._pos.y,
+            side: target._side,
+            text: String(text),
+            color: color,
+            time: Date.now()
+        });
+    },
+
     // ===== 九宫格渲染 =====
     render: function() {
         if (!this.state) return;
@@ -663,15 +715,12 @@ var Battle = {
         document.getElementById('battle-round').textContent = s.round;
         document.getElementById('battle-speed').textContent = this.speed;
 
-        // 渲染敌方 3×3
         var enemyHtml = this.renderGrid(s.enemyUnits, 'enemy');
         document.getElementById('enemy-side').innerHTML = enemyHtml;
 
-        // 渲染我方 3×3
         var playerHtml = this.renderGrid(s.playerUnits, 'player');
         document.getElementById('player-side').innerHTML = playerHtml;
 
-        // 渲染操作按钮
         if (s.playerTurn && s.currentUnit && !s.currentUnit._dead) {
             var unit = s.currentUnit;
             document.getElementById('battle-controls').style.display = 'block';
@@ -704,9 +753,7 @@ var Battle = {
         }
     },
 
-    // 渲染 3×3 网格
     renderGrid: function(units, side) {
-        // 建立 posKey -> unit 映射
         var posMap = {};
         for (var i = 0; i < units.length; i++) {
             var u = units[i];
@@ -715,11 +762,29 @@ var Battle = {
             posMap[key] = u;
         }
 
+        // 收集该side的飘字
+        var floats = [];
+        if (this.state && this.state.floatingTexts) {
+            var now = Date.now();
+            for (var fi = 0; fi < this.state.floatingTexts.length; fi++) {
+                var ft = this.state.floatingTexts[fi];
+                if (ft.side === side && now - ft.time < 1200) {
+                    floats.push(ft);
+                }
+            }
+        }
+
         var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">';
         for (var y = 0; y < 3; y++) {
             for (var x = 0; x < 3; x++) {
                 var key = x + ',' + y;
                 var u = posMap[key];
+                var floatHtml = '';
+                for (var fi = 0; fi < floats.length; fi++) {
+                    if (floats[fi].x === x && floats[fi].y === y) {
+                        floatHtml += '<div class="float-text" style="color:' + floats[fi].color + '">' + floats[fi].text + '</div>';
+                    }
+                }
                 if (u) {
                     var hpPct = u._dead ? 0 : (u._hp / u._maxHp * 100);
                     var ultPct = Math.min(100, u._ult || 0);
@@ -727,6 +792,7 @@ var Battle = {
                     var deadClass = u._dead ? 'dead' : '';
                     html += '<div class="battle-unit ' + deadClass + ' ' + isActive + '" ' +
                         (side === 'enemy' && !u._dead ? 'onclick="Battle.selectTarget(' + u._index + ')"' : '') + '>' +
+                        floatHtml +
                         '<div class="unit-avatar">' + (u.avatar || (side === 'player' ? '🎭' : '👤')) + '</div>' +
                         '<div class="unit-name">' + u.name + '</div>' +
                         '<div class="unit-hp-bar"><div class="unit-hp-fill" style="width:' + hpPct + '%"></div></div>' +
@@ -734,11 +800,24 @@ var Battle = {
                         (side === 'player' ? '<div class="unit-ult-bar"><div class="unit-ult-fill" style="width:' + ultPct + '%"></div></div>' : '') +
                     '</div>';
                 } else {
-                    html += '<div style="min-height:80px;border:1px dashed #444;border-radius:6px;background:rgba(0,0,0,0.2);"></div>';
+                    html += '<div style="min-height:80px;border:1px dashed #444;border-radius:6px;background:rgba(0,0,0,0.2);position:relative;">' + floatHtml + '</div>';
                 }
             }
         }
         html += '</div>';
+
+        // 清理过期飘字
+        if (this.state && this.state.floatingTexts) {
+            var now2 = Date.now();
+            var kept = [];
+            for (var i = 0; i < this.state.floatingTexts.length; i++) {
+                if (now2 - this.state.floatingTexts[i].time < 1200) {
+                    kept.push(this.state.floatingTexts[i]);
+                }
+            }
+            this.state.floatingTexts = kept;
+        }
+
         return html;
     },
 

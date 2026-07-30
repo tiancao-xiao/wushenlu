@@ -475,6 +475,98 @@ var Game = {
         UI.showModal('习得奥义！', '你从 <b>' + unit.name + '</b> 那里学会了奥义 <b>' + ultSkill.name + '</b>！');
     },
 
+    // ===== 任务系统 =====
+    // 追踪击杀/收集等任务进度
+    trackKill: function(enemyId) {
+        if (!this.state || !this.state.quests) return;
+        for (var i = 0; i < this.state.quests.length; i++) {
+            var q = this.state.quests[i];
+            if (q.completed) continue;
+            if (q.target && q.target.kill === enemyId) {
+                q.progress = (q.progress || 0) + 1;
+                if (q.progress >= q.target.count) {
+                    // 任务完成但不自动提交，需要找NPC
+                }
+            }
+        }
+        Game.saveGame();
+    },
+
+    // 检查任务是否可以提交
+    canCompleteQuest: function(quest) {
+        if (!quest || quest.completed) return false;
+        if (quest.target) {
+            if (quest.target.kill) {
+                return (quest.progress || 0) >= quest.target.count;
+            } else if (quest.target.item) {
+                var have = this.state.hero.inventory[quest.target.item] || 0;
+                return have >= quest.target.count;
+            } else if (quest.target.forge) {
+                return (quest.forgeCount || 0) >= quest.target.forge;
+            }
+        }
+        return false;
+    },
+
+    // 提交任务
+    submitQuest: function(questId) {
+        var quest = null;
+        for (var i = 0; i < this.state.quests.length; i++) {
+            if (this.state.quests[i].id === questId) {
+                quest = this.state.quests[i];
+                break;
+            }
+        }
+        if (!quest) {
+            UI.showModal('错误', '任务不存在！');
+            return;
+        }
+        if (quest.completed) {
+            UI.showModal('提示', '该任务已完成！');
+            return;
+        }
+        if (!this.canCompleteQuest(quest)) {
+            UI.showModal('提示', '任务条件尚未满足！');
+            return;
+        }
+
+        // 扣除材料（如果有）
+        if (quest.target && quest.target.item) {
+            if (!this.consumeItem(quest.target.item, quest.target.count)) {
+                UI.showModal('提示', '材料不足！');
+                return;
+            }
+        }
+
+        // 发放奖励
+        quest.completed = true;
+        var r = quest.reward;
+        var msg = '任务「' + quest.name + '」完成！<br><br>';
+        if (r.exp) {
+            for (var j = 0; j < this.state.team.length; j++) {
+                this.gainExp(this.state.team[j], r.exp);
+            }
+            msg += '⭐ 经验 +' + r.exp + '<br>';
+        }
+        if (r.silver) {
+            this.addSilver(r.silver);
+            msg += '💰 银两 +' + r.silver + '<br>';
+        }
+        if (r.items) {
+            for (var k = 0; k < r.items.length; k++) {
+                var parts = r.items[k].split(':');
+                var itemId = parts[0];
+                var count = parseInt(parts[1], 10) || 1;
+                this.addItem(itemId, count);
+                var mat = GAME_DATA.materials[itemId];
+                msg += '📦 ' + (mat ? mat.name : itemId) + ' ×' + count + '<br>';
+            }
+        }
+
+        Game.saveGame();
+        UI.showModal('任务完成', msg);
+    },
+
     // ===== 物品系统 =====
     addItem: function(itemId, count) {
         count = count || 1;
