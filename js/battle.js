@@ -658,21 +658,32 @@ var Battle = {
                 Map.markDefeated(this.state.options.cellKey);
             }
 
-            var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
+            // 检查是否击败当前章节的Boss
+            var currentChapterId = Game.state.currentChapter;
+            var chapter = null;
+            for (var ci = 0; ci < GAME_DATA.chapters.length; ci++) {
+                if (GAME_DATA.chapters[ci].id === currentChapterId) {
+                    chapter = GAME_DATA.chapters[ci];
+                    break;
+                }
+            }
             var pos = Game.state.currentPos;
             if (chapter && pos.x === chapter.exitPos.x && pos.y === chapter.exitPos.y) {
-                Game.state.chapter++;
-                var nextChapter = GAME_DATA.chapters[Game.state.chapter - 1];
-                if (nextChapter) {
-                    Game.state.currentPos = { x: nextChapter.startPos.x, y: nextChapter.startPos.y };
-                    Game.state.visitedCells = [];
-                    Game.state.defeatedCells = [];
+                var unlockedNew = Map.unlockNextChapter(currentChapterId);
+                if (unlockedNew) {
+                    var nextCh = null;
+                    for (var ni = 0; ni < GAME_DATA.chapters.length; ni++) {
+                        if (GAME_DATA.chapters[ni].id === currentChapterId + 1) {
+                            nextCh = GAME_DATA.chapters[ni];
+                            break;
+                        }
+                    }
+                    UI.showModal('章节通关！', '恭喜通关<b>' + chapter.name + '——' + chapter.location + '</b>！<br><br>' + (nextCh ? '下一章「' + nextCh.name + '——' + nextCh.location + '」已解锁！' : '所有章节已通关！'));
                 }
-                UI.showModal('章节通关！', '恭喜通关<b>' + chapter.name + '</b>！<br><br>下一章已解锁。');
             }
             Game.saveGame();
             Game.toScreen('map');
-            Map.init();
+            Map.init(currentChapterId);
         } else {
             for (var i = 0; i < Game.state.team.length; i++) {
                 var u = Game.state.team[i];

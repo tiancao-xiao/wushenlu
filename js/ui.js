@@ -173,7 +173,6 @@ var UI = {
         this.renderHeroes();
     },
 
-    // ===== 站位配置 =====
     showPlaceHeroModal: function(x, y) {
         var positions = Game.state.teamPositions || {};
         var placedIds = {};
@@ -463,19 +462,32 @@ var UI = {
             var q = Game.state.quests[i];
             var completed = q.completed || false;
             var sourceText = '';
-            if (q.npc && q.chapter) {
-                var npcNames = { cunmin: '村民', tiejiang: '老铁匠', caocao: '曹操', yuanshao: '袁绍' };
-                sourceText = '<div class="task-source">📍 第' + q.chapter + '章 - ' + (npcNames[q.npc] || q.npc) + '</div>';
+            // 用 location + npcName 来定位
+            if (q.location && q.npcName) {
+                sourceText = '<div class="task-source">📍 ' + q.location + ' · ' + q.npcName + '</div>';
             }
 
-            // 进度显示
             var progressText = '';
+            var actionHint = '';
             if (!completed && q.target) {
                 if (q.target.kill) {
-                    progressText = '<div class="task-progress">进度: ' + (q.progress || 0) + '/' + q.target.count + '</div>';
+                    var prog = q.progress || 0;
+                    progressText = '<div class="task-progress">进度: ' + prog + '/' + q.target.count + '</div>';
+                    if (prog >= q.target.count) {
+                        actionHint = '<div style="font-size:12px;color:#6b8e6b;margin-top:4px;">✓ 已完成！请去 ' + q.location + ' 找 ' + q.npcName + ' 答复</div>';
+                    } else {
+                        actionHint = '<div style="font-size:12px;color:#999;margin-top:4px;">前往 ' + q.location + ' 的迷宫击杀 ' + q.target.count + ' 个目标</div>';
+                    }
                 } else if (q.target.item) {
                     var have = Game.state.hero.inventory[q.target.item] || 0;
                     progressText = '<div class="task-progress">持有: ' + have + '/' + q.target.count + '</div>';
+                    if (have >= q.target.count) {
+                        actionHint = '<div style="font-size:12px;color:#6b8e6b;margin-top:4px;">✓ 材料齐全！请去 ' + q.location + ' 找 ' + q.npcName + ' 提交</div>';
+                    } else {
+                        actionHint = '<div style="font-size:12px;color:#999;margin-top:4px;">收集 ' + q.target.count + ' 个 ' + (GAME_DATA.materials[q.target.item] ? GAME_DATA.materials[q.target.item].name : q.target.item) + '</div>';
+                    }
+                } else if (q.target.forge) {
+                    actionHint = '<div style="font-size:12px;color:#999;margin-top:4px;">去 ' + q.location + ' 的铁匠铺锻造兵器</div>';
                 }
             }
 
@@ -486,33 +498,7 @@ var UI = {
                 '</div>' +
                 '<div class="task-desc">' + q.desc + '</div>' +
                 progressText +
-                '<div class="task-reward">' +
-                    '奖励: ' + (q.reward.exp ? '经验+' + q.reward.exp : '') + ' ' +
-                    (q.reward.silver ? '银两+' + q.reward.silver : '') +
-                '</div>' +
-            '</div>';
-        }
-
-        if (html === '') {
-            html = '<div style="text-align:center;color:#999;padding:40px;">暂无任务</div>';
-        }
-
-        list.innerHTML = html;
-    },
-    renderTasks: function() {
-        if (!Game.state) return;
-        var list = document.getElementById('task-list');
-        if (!list) return;
-
-        var html = '';
-        for (var i = 0; i < Game.state.quests.length; i++) {
-            var q = Game.state.quests[i];
-            var completed = q.completed || false;
-            html += '<div class="task-item ' + (completed ? 'completed' : '') + '">' +
-                '<div class="task-title">' +
-                    '<span>' + q.name + '</span>' +
-                '</div>' +
-                '<div class="task-desc">' + q.desc + '</div>' +
+                actionHint +
                 '<div class="task-reward">' +
                     '奖励: ' + (q.reward.exp ? '经验+' + q.reward.exp : '') + ' ' +
                     (q.reward.silver ? '银两+' + q.reward.silver : '') +

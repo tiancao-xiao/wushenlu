@@ -308,6 +308,50 @@ var GAME_DATA = {
     },
 
     // ===== 关卡配置（网格迷宫） =====
+    chapters: [
+        {
+            id: 1, name: '黄巾之乱', location: '巨鹿',
+            width: 5, height: 5,
+            startPos: { x: 0, y: 2 },
+            exitPos: { x: 4, y: 2 },
+            desc: '天下大乱，黄巾军四起，你从家乡出发，初涉乱世。',
+            cells: {
+                '0,2': { type: 'start', icon: '🏠', desc: '起点：你的故乡' },
+                '1,2': { type: 'empty', icon: '⬜', desc: '一片荒野，风沙漫天。' },
+                '1,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '前方有黄巾兵拦路！' },
+                '1,3': { type: 'npc', icon: '👤', npc: 'cunmin_a', npcName: '村民阿福', desc: '一位村民神色慌张，似乎有话要说。', dialog: '壮士！黄巾贼在附近烧杀抢掠，求你出手相助！杀了20个黄巾兵再来找我。' },
+                '2,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '一群黄巾卒挡住了去路。' },
+                '2,1': { type: 'chest', icon: '📦', desc: '发现了一个被遗弃的箱子。', reward: { items: ['tiekuang:3', 'caoyao:2'], silver: 50 } },
+                '2,3': { type: 'battle', icon: '💀', enemy: 'huangjin_xiaoshuai', count: 1, desc: '黄巾小帅率领手下在此设伏！' },
+                '2,0': { type: 'empty', icon: '⬜', desc: '荒凉的村庄，空无一人。' },
+                '3,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾兵的巡逻队！' },
+                '3,1': { type: 'npc', icon: '👤', npc: 'tiejiang', npcName: '老铁匠', desc: '一位老铁匠在废墟中整理工具。', dialog: '小伙子，想打造兵器吗？收集材料来找我。' },
+                '3,3': { type: 'npc', icon: '👤', npc: 'cunmin_b', npcName: '村民阿贵', desc: '一位村民正在采药，却遇到了麻烦。', dialog: '壮士，我最近急需草药治病，你能帮我收集15株草药吗？' },
+                '3,0': { type: 'hidden', icon: '❓', desc: '空气中弥漫着一股神秘的气息...', condition: { fuqi: 8 }, reward: { items: ['chixiao_frag:1'] } },
+                '4,2': { type: 'boss', icon: '👹', enemy: 'boss_zhangjiao', desc: '巨鹿城外，张角正在施法召唤雷霆！', reward: { exp: 500, silver: 1000, unlock: 'guanyu' } }
+            }
+        },
+        {
+            id: 2, name: '虎牢风云', location: '虎牢关',
+            width: 5, height: 5,
+            startPos: { x: 0, y: 2 },
+            exitPos: { x: 4, y: 2 },
+            desc: '诸侯联军讨伐董卓，虎牢关下，三英战吕布的序幕即将拉开。',
+            cells: {
+                '0,2': { type: 'start', icon: '🏠', desc: '联军大营，旌旗招展。' },
+                '1,2': { type: 'battle', icon: '⚔️', enemy: 'xiliang_bing', count: 2, desc: '西凉兵的先锋部队！' },
+                '1,1': { type: 'empty', icon: '⬜', desc: '虎牢关外，地势险要。' },
+                '1,3': { type: 'battle', icon: '⚔️', enemy: 'xiliang_qibing', count: 2, desc: '西凉铁骑冲锋而来！' },
+                '2,2': { type: 'npc', icon: '👤', npc: 'caocao', npcName: '曹操', desc: '曹操正在帐中研究地图。', dialog: '此战关乎天下大势，务必攻破虎牢！' },
+                '2,1': { type: 'chest', icon: '📦', desc: '联军辎重队遗落的物资。', reward: { items: ['jingtie:2', 'tongkuang:2'], silver: 100 } },
+                '2,3': { type: 'battle', icon: '💀', enemy: 'xiliang_bing', count: 3, desc: '西凉兵的重重包围！' },
+                '3,2': { type: 'empty', icon: '⬜', desc: '虎牢关城墙高耸入云。' },
+                '3,1': { type: 'battle', icon: '⚔️', enemy: 'xiliang_qibing', count: 3, desc: '西凉铁骑的主力！' },
+                '3,3': { type: 'npc', icon: '👤', npc: 'yuanshao', npcName: '袁绍', desc: '袁绍正在召集诸侯议事。', dialog: '吕布勇猛无双，谁敢出战？' },
+                '4,2': { type: 'boss', icon: '👹', enemy: 'boss_lvbu_first', desc: '吕布手持方天画戟，胯下赤兔马，傲立关前！\n（此战只需坚持10回合即可）', reward: { exp: 800, silver: 1500 }, special: { survive: 10 } }
+            }
+        }
+    ],
     // 每个关卡是一个 width×height 的网格
     // cells 以 "x,y" 为键存储格子数据
     // startPos: 起点坐标, exitPos: 出口/Boss坐标
@@ -387,6 +431,12 @@ var GAME_DATA = {
     },
 
     // ===== 任务 =====
+    // location: 任务所在地点名，npc: NPC标识，npcName: NPC显示名
+    quests: [
+        { id: 'q_kill_huangjin', name: '清缴黄巾', type: 'sub', desc: '击杀黄巾兵×20', location: '巨鹿', npc: 'cunmin_a', npcName: '村民阿福', target: { kill: 'huangjin_bing', count: 20 }, reward: { exp: 500, silver: 1000 } },
+        { id: 'q_collect_herb', name: '采集草药', type: 'sub', desc: '提交草药×15', location: '巨鹿', npc: 'cunmin_b', npcName: '村民阿贵', target: { item: 'caoyao', count: 15 }, reward: { exp: 300, items: ['jinchuang:5'] } },
+        { id: 'q_forge_first', name: '初次锻造', type: 'sub', desc: '在铁匠铺锻造任意兵器', location: '巨鹿', npc: 'tiejiang', npcName: '老铁匠', target: { forge: 1 }, reward: { exp: 200, silver: 500 } }
+    ],
     // npc: 发布任务的NPC标识，chapter: 所在章节
     quests: [
         { id: 'q_kill_huangjin', name: '清缴黄巾', type: 'sub', desc: '击杀黄巾兵×20', npc: 'cunmin', chapter: 1, target: { kill: 'huangjin_bing', count: 20 }, reward: { exp: 500, silver: 1000 } },

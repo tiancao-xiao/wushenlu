@@ -1,34 +1,116 @@
 // ===== 地图探索系统（网格迷宫） =====
 // 【设计快照 2026-07-30】
-// 状态：currentPos{x,y}, visitedCells[], defeatedCells[]
-// 移动：上下左右，走进怪格子后才拦路（必须击败才能离开）
-// 小怪：击败后不拦路但不消失，可反复刷
+// 章节选择 → 进入具体章节 → 网格探索
 
 var Map = {
-    init: function() {
+    // ===== 章节选择界面 =====
+    showChapterSelect: function() {
         if (!Game.state) return;
+        var gridEl = document.getElementById('map-grid');
+        var descEl = document.getElementById('map-event-desc');
+        var actionsEl = document.getElementById('map-actions');
+        var titleEl = document.getElementById('map-chapter-title');
 
-        var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
+        if (titleEl) titleEl.textContent = '选择章节';
+        if (descEl) descEl.innerHTML = '<b>请选择要探索的章节</b><br>已通关的章节可以随时返回。';
+        if (actionsEl) actionsEl.innerHTML = '';
+
+        var html = '<div style="display:flex;flex-direction:column;gap:12px;padding:8px;">';
+        var unlocked = Game.state.unlockedChapters || [1];
+
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            var ch = GAME_DATA.chapters[i];
+            var isUnlocked = false;
+            for (var j = 0; j < unlocked.length; j++) {
+                if (unlocked[j] === ch.id) { isUnlocked = true; break; }
+            }
+            var isCurrent = Game.state.currentChapter === ch.id;
+            var isCleared = Game.state.chapter > ch.id; // 已经打到更后面去了
+
+            var style = 'padding:16px;border-radius:8px;border:2px solid ';
+            if (isUnlocked) {
+                style += (isCleared ? '#6b8e6b' : '#d4a843') + ';background:rgba(212,168,67,0.1);cursor:pointer;';
+            } else {
+                style += '#555;background:#222;color:#666;cursor:not-allowed;';
+            }
+
+            html += '<div style="' + style + '" ' + (isUnlocked ? 'onclick="Map.enterChapter(' + ch.id + ')"' : '') + '>' +
+                '<div style="font-size:18px;font-weight:700;color:' + (isUnlocked ? '#fff' : '#666') + '">' +
+                    (isCleared ? '✓ ' : isCurrent ? '▶ ' : isUnlocked ? '○ ' : '🔒 ') +
+                    '第' + ch.id + '章 ' + ch.name + '——' + ch.location +
+                '</div>' +
+                '<div style="font-size:13px;color:#aaa;margin-top:4px;">' + ch.desc + '</div>' +
+                (isUnlocked ? '<div style="font-size:12px;color:#d4a843;margin-top:6px;">' + (isCleared ? '已通关 · 可返回探索' : isCurrent ? '当前进度' : '已解锁') + '</div>' : '') +
+            '</div>';
+        }
+        html += '</div>';
+        if (gridEl) gridEl.innerHTML = html;
+    },
+
+    enterChapter: function(chapterId) {
+        // 保存当前章节进度（如果有）
+        if (Game.state.currentChapter) {
+            // 可以在这里保存当前章节的 visited/defeated 到存档里
+            // 暂时简单处理：切换章节时重置当前位置
+        }
+        Game.state.currentChapter = chapterId;
+        Game.saveGame();
+        this.init(chapterId);
+    },
+
+    // ===== 进入具体章节 =====
+    init: function(chapterId) {
+        if (!Game.state) return;
+        chapterId = chapterId || Game.state.currentChapter || 1;
+
+        var chapter = null;
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            if (GAME_DATA.chapters[i].id === chapterId) {
+                chapter = GAME_DATA.chapters[i];
+                break;
+            }
+        }
         if (!chapter) {
-            UI.showModal('恭喜！', '你已经通关了所有已开放的章节！');
+            UI.showModal('错误', '章节不存在！');
             return;
         }
 
-        document.getElementById('map-chapter-title').textContent = '第' + chapter.id + '章 ' + chapter.name;
+        var titleEl = document.getElementById('map-chapter-title');
+        if (titleEl) titleEl.textContent = '第' + chapter.id + '章 ' + chapter.name + '——' + chapter.location;
 
-        if (!Game.state.currentPos) {
-            Game.state.currentPos = { x: chapter.startPos.x, y: chapter.startPos.y };
+        // 每个章节独立的探索状态
+        var chapterStateKey = 'chapter_' + chapterId;
+        if (!Game.state.chapterStates) Game.state.chapterStates = {};
+        if (!Game.state.chapterStates[chapterStateKey]) {
+            Game.state.chapterStates[chapterStateKey] = {
+                currentPos: { x: chapter.startPos.x, y: chapter.startPos.y },
+                visitedCells: [],
+                defeatedCells: []
+            };
         }
-        if (!Game.state.visitedCells) {
-            Game.state.visitedCells = [];
-        }
-        if (!Game.state.defeatedCells) {
-            Game.state.defeatedCells = [];
-        }
+        var cs = Game.state.chapterStates[chapterStateKey];
+
+        // 同步到全局状态（供其他函数使用）
+        Game.state.currentPos = cs.currentPos;
+        Game.state.visitedCells = cs.visitedCells;
+        Game.state.defeatedCells = cs.defeatedCells;
 
         this.markVisited();
         this.renderMap(chapter);
         this.showCurrentEvent(chapter);
+    },
+
+    // 保存当前章节状态
+    saveChapterState: function() {
+        if (!Game.state || !Game.state.currentChapter) return;
+        var chapterStateKey = 'chapter_' + Game.state.currentChapter;
+        if (!Game.state.chapterStates) Game.state.chapterStates = {};
+        Game.state.chapterStates[chapterStateKey] = {
+            currentPos: Game.state.currentPos,
+            visitedCells: Game.state.visitedCells,
+            defeatedCells: Game.state.defeatedCells
+        };
+        Game.saveGame();
     },
 
     markVisited: function() {
@@ -37,10 +119,7 @@ var Map = {
         var visited = Game.state.visitedCells;
         var found = false;
         for (var i = 0; i < visited.length; i++) {
-            if (visited[i] === key) {
-                found = true;
-                break;
-            }
+            if (visited[i] === key) { found = true; break; }
         }
         if (!found) {
             visited.push(key);
@@ -177,7 +256,7 @@ var Map = {
             return;
         }
 
-        // 【关键】检查当前格子是否有未击败的怪——如果有，必须先击败才能离开
+        // 检查当前格子是否有未击败的怪——如果有，必须先击败才能离开
         var curKey = pos.x + ',' + pos.y;
         var curCell = chapter.cells[curKey];
         var defeated = Game.state.defeatedCells;
@@ -198,6 +277,7 @@ var Map = {
         Game.state.actionPoints--;
         Game.state.currentPos = { x: nx, y: ny };
         this.markVisited();
+        this.saveChapterState();
 
         this.renderMap(chapter);
         this.showCurrentEvent(chapter);
@@ -227,14 +307,12 @@ var Map = {
 
         if (isHostile) {
             if (!isDefeated) {
-                // 未击败：只能迎战
                 if (cell.type === 'boss') {
                     actionsHtml = '<button onclick="Map.startBossBattle()">挑战Boss</button>';
                 } else {
                     actionsHtml = '<button onclick="Map.startBattle(\'' + cell.enemy + '\', ' + (cell.count || 1) + ')">迎战</button>';
                 }
             } else {
-                // 已击败：仍然可以迎战（反复刷），同时可以离开
                 if (cell.type === 'boss') {
                     actionsHtml = '<button onclick="Map.startBossBattle()">再次挑战</button>';
                 } else {
@@ -266,12 +344,20 @@ var Map = {
         }
 
         actionsHtml += '<button class="secondary" onclick="Map.toggleMapView()">查看全图</button>';
+        actionsHtml += '<button class="secondary" onclick="Map.showChapterSelect()">返回章节选择</button>';
         actionsEl.innerHTML = actionsHtml;
     },
 
     isFullView: false,
     toggleMapView: function() {
-        var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
+        var chapter = null;
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            if (GAME_DATA.chapters[i].id === Game.state.currentChapter) {
+                chapter = GAME_DATA.chapters[i];
+                break;
+            }
+        }
+        if (!chapter) return;
         this.isFullView = !this.isFullView;
         if (this.isFullView) {
             this.renderFullMap(chapter);
@@ -287,7 +373,14 @@ var Map = {
     },
 
     startBossBattle: function() {
-        var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
+        var chapter = null;
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            if (GAME_DATA.chapters[i].id === Game.state.currentChapter) {
+                chapter = GAME_DATA.chapters[i];
+                break;
+            }
+        }
+        if (!chapter) return;
         var pos = Game.state.currentPos;
         var cell = chapter.cells[pos.x + ',' + pos.y];
         if (!cell) return;
@@ -308,57 +401,63 @@ var Map = {
         if (!found) {
             defeated.push(cellKey);
         }
+        this.saveChapterState();
         Game.saveGame();
     },
 
     openCurrentChest: function() {
-        var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
+        var chapter = null;
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            if (GAME_DATA.chapters[i].id === Game.state.currentChapter) {
+                chapter = GAME_DATA.chapters[i];
+                break;
+            }
+        }
+        if (!chapter) return;
         var pos = Game.state.currentPos;
         var cell = chapter.cells[pos.x + ',' + pos.y];
         this.openChest(cell.reward);
     },
 
     talkNPC: function() {
-        var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
+        var chapter = null;
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            if (GAME_DATA.chapters[i].id === Game.state.currentChapter) {
+                chapter = GAME_DATA.chapters[i];
+                break;
+            }
+        }
+        if (!chapter) return;
         var pos = Game.state.currentPos;
         var cell = chapter.cells[pos.x + ',' + pos.y];
         if (!cell) return;
 
-        var npcNames = {
-            cunmin: '村民',
-            tiejiang: '老铁匠',
-            caocao: '曹操',
-            yuanshao: '袁绍'
-        };
-
-        var name = npcNames[cell.npc] || '陌生人';
+        var npcName = cell.npcName || cell.npc || '陌生人';
         var content = (cell.dialog || '...');
 
         // 根据NPC类型添加功能按钮
         var buttons = '<div class="npc-dialog-actions">';
 
         if (cell.npc === 'tiejiang') {
-            // 铁匠：购买材料 + 去铁匠铺
             buttons += '<button onclick="UI.closeModal();Game.toScreen(\'smith\');UI.renderSmith();">去铁匠铺</button>';
             buttons += '<button class="secondary" onclick="Map.buyMaterial()">购买材料</button>';
         }
 
-        // 检查该NPC是否有可提交的任务
-        var hasQuest = false;
-        for (var i = 0; i < Game.state.quests.length; i++) {
-            var q = Game.state.quests[i];
+        // 检查该NPC是否有可提交的任务（按 location + npc 匹配）
+        for (var qi = 0; qi < Game.state.quests.length; qi++) {
+            var q = Game.state.quests[qi];
             if (q.completed) continue;
-            if (q.npc === cell.npc && q.chapter === chapter.id) {
-                hasQuest = true;
+            // 匹配条件：任务 location 等于当前章节 location，且 npc 匹配
+            if (q.location === chapter.location && q.npc === cell.npc) {
                 var canSubmit = Game.canCompleteQuest(q);
                 buttons += '<button ' + (canSubmit ? '' : 'disabled') + ' onclick="UI.closeModal();Game.submitQuest(\'' + q.id + '\')">' +
-                    (canSubmit ? '✓ 提交「' + q.name + '」' : '「' + q.name + '」材料不足') + '</button>';
+                    (canSubmit ? '✓ 提交「' + q.name + '」' : '「' + q.name + '」条件未满足') + '</button>';
             }
         }
 
         buttons += '</div>';
 
-        UI.showModal(name, content + '<br><br>' + buttons);
+        UI.showModal(npcName, content + '<br><br>' + buttons);
     },
 
     buyMaterial: function() {
@@ -426,8 +525,14 @@ var Map = {
         UI.showModal('获得物品', msg);
         Game.saveGame();
 
-        var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
-        this.showCurrentEvent(chapter);
+        var chapter = null;
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            if (GAME_DATA.chapters[i].id === Game.state.currentChapter) {
+                chapter = GAME_DATA.chapters[i];
+                break;
+            }
+        }
+        if (chapter) this.showCurrentEvent(chapter);
     },
 
     healAll: function() {
@@ -442,15 +547,24 @@ var Map = {
         Game.saveGame();
     },
 
-    nextChapter: function() {
-        Game.state.chapter++;
-        var chapter = GAME_DATA.chapters[Game.state.chapter - 1];
-        if (chapter) {
-            Game.state.currentPos = { x: chapter.startPos.x, y: chapter.startPos.y };
-            Game.state.visitedCells = [];
-            Game.state.defeatedCells = [];
+    // 通关章节后解锁下一章
+    unlockNextChapter: function(chapterId) {
+        var unlocked = Game.state.unlockedChapters || [1];
+        var nextId = chapterId + 1;
+        var already = false;
+        for (var i = 0; i < unlocked.length; i++) {
+            if (unlocked[i] === nextId) { already = true; break; }
         }
-        Game.saveGame();
-        this.init();
+        if (!already) {
+            unlocked.push(nextId);
+            Game.state.unlockedChapters = unlocked;
+            // 更新总进度
+            if (nextId > Game.state.chapter) {
+                Game.state.chapter = nextId;
+            }
+            Game.saveGame();
+            return true;
+        }
+        return false;
     }
 };

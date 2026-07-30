@@ -28,6 +28,17 @@ var Game = {
                         this.state.teamPositions[t.id] = defaults[t.id] || { x: i % 3, y: 2 };
                     }
                 }
+                // 兼容旧存档：补充 unlockedChapters
+                if (!this.state.unlockedChapters) {
+                    this.state.unlockedChapters = [];
+                    for (var c = 1; c <= this.state.chapter; c++) {
+                        this.state.unlockedChapters.push(c);
+                    }
+                }
+                // 兼容旧存档：补充 currentChapter
+                if (!this.state.currentChapter) {
+                    this.state.currentChapter = this.state.chapter;
+                }
             } catch(e) {
                 this.state = null;
             }
@@ -50,6 +61,8 @@ var Game = {
         this.currentScreen = screenId;
 
         if (screenId === 'main') this.updateMainUI();
+        if (screenId === 'map') Map.showChapterSelect();
+        if (screenId === 'heroes') UI.renderHeroes();
         if (screenId === 'map') Map.init();
         if (screenId === 'heroes') UI.renderHeroes();
         if (screenId === 'bag') UI.renderBag();
@@ -144,6 +157,8 @@ var Game = {
             team: team,
             unlockedHeroes: ['guanping'],
             chapter: 1,
+            currentChapter: 1,
+            unlockedChapters: [1],
             stage: 0,
             currentPos: { x: GAME_DATA.chapters[0].startPos.x, y: GAME_DATA.chapters[0].startPos.y },
             visitedCells: [],
