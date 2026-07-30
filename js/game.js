@@ -166,7 +166,7 @@ var Game = {
             silver: 200,
             actionPoints: 100,
             maxActionPoints: 100,
-            quests: copyObj(GAME_DATA.quests),
+            quests: [],
             formations: ['yulin', 'fengshi', 'bagua'],
             currentFormation: 'yulin',
             defeatedBosses: [],
@@ -580,6 +580,36 @@ var Game = {
 
         Game.saveGame();
         UI.showModal('任务完成', msg);
+    },
+
+    // 接取任务（从NPC处接取）
+    acceptQuest: function(questId) {
+        if (!this.state) return;
+        // 检查是否已接取
+        for (var i = 0; i < this.state.quests.length; i++) {
+            if (this.state.quests[i].id === questId) {
+                UI.showModal('提示', '你已经接取了该任务！');
+                return;
+            }
+        }
+        // 从任务模板中找到该任务
+        var template = null;
+        for (var j = 0; j < GAME_DATA.quests.length; j++) {
+            if (GAME_DATA.quests[j].id === questId) {
+                template = GAME_DATA.quests[j];
+                break;
+            }
+        }
+        if (!template) {
+            UI.showModal('错误', '任务不存在！');
+            return;
+        }
+        var quest = copyObj(template);
+        quest.progress = 0;
+        quest.completed = false;
+        this.state.quests.push(quest);
+        Game.saveGame();
+        UI.showModal('接取任务', '你接取了任务「' + quest.name + '」！<br><br>' + quest.desc);
     },
 
     // ===== 物品系统 =====

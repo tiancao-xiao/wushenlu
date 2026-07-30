@@ -444,6 +444,34 @@ var Map = {
         }
 
         // 检查该NPC是否有可提交的任务（按 location + npc 匹配）
+        var hasActiveQuest = false;
+        for (var qi = 0; qi < Game.state.quests.length; qi++) {
+            var q = Game.state.quests[qi];
+            if (q.completed) continue;
+            if (q.location === chapter.location && q.npc === cell.npc) {
+                hasActiveQuest = true;
+                var canSubmit = Game.canCompleteQuest(q);
+                buttons += '<button ' + (canSubmit ? '' : 'disabled') + ' onclick="UI.closeModal();Game.submitQuest(\'' + q.id + '\')">' +
+                    (canSubmit ? '✓ 提交「' + q.name + '」' : '「' + q.name + '」条件未满足') + '</button>';
+            }
+        }
+
+        // 检查该NPC是否有未接取的任务
+        for (var ti = 0; ti < GAME_DATA.quests.length; ti++) {
+            var tq = GAME_DATA.quests[ti];
+            if (tq.location === chapter.location && tq.npc === cell.npc) {
+                var alreadyAccepted = false;
+                for (var ai = 0; ai < Game.state.quests.length; ai++) {
+                    if (Game.state.quests[ai].id === tq.id) {
+                        alreadyAccepted = true;
+                        break;
+                    }
+                }
+                if (!alreadyAccepted) {
+                    buttons += '<button onclick="UI.closeModal();Game.acceptQuest(\'' + tq.id + '\')">📜 接取任务「' + tq.name + '」</button>';
+                }
+            }
+        }
         for (var qi = 0; qi < Game.state.quests.length; qi++) {
             var q = Game.state.quests[qi];
             if (q.completed) continue;

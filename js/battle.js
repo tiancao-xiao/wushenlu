@@ -80,9 +80,9 @@ var Battle = {
                 { name: '猛击', cost: 20, cd: 3, dmg: 1.5 },
                 { name: '重击', cost: 30, cd: 4, dmg: 2.2 }
             ];
+            eu._skillCd = [0, 0];
             eu._canUseUlt = true;
             eu.id = enemyTemplate;
-            eu._pos = this.getEnemyPos(j, count);
             eu._pos = this.getEnemyPos(j, count);
             enemyUnits.push(eu);
         }

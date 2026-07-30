@@ -439,7 +439,7 @@ var UI = {
                 }
             }
             if (q && !q.completed) {
-                q.completed = true;
+                q.forgeCount = (q.forgeCount || 0) + 1;
             }
         } else {
             var refund = Math.floor(Object.keys(item.materials).length * 50);
@@ -487,7 +487,13 @@ var UI = {
                         actionHint = '<div style="font-size:12px;color:#999;margin-top:4px;">收集 ' + q.target.count + ' 个 ' + (GAME_DATA.materials[q.target.item] ? GAME_DATA.materials[q.target.item].name : q.target.item) + '</div>';
                     }
                 } else if (q.target.forge) {
-                    actionHint = '<div style="font-size:12px;color:#999;margin-top:4px;">去 ' + q.location + ' 的铁匠铺锻造兵器</div>';
+                    var fcount = q.forgeCount || 0;
+                    progressText = '<div class="task-progress">锻造: ' + fcount + '/' + q.target.forge + '</div>';
+                    if (fcount >= q.target.forge) {
+                        actionHint = '<div style="font-size:12px;color:#6b8e6b;margin-top:4px;">✓ 已完成！请去 ' + q.location + ' 找 ' + q.npcName + ' 提交</div>';
+                    } else {
+                        actionHint = '<div style="font-size:12px;color:#999;margin-top:4px;">去 ' + q.location + ' 的铁匠铺锻造 ' + q.target.forge + ' 次兵器</div>';
+                    }
                 }
             }
 
