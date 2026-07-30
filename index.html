@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>乱世武神录</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 启动画面 -->
+        <div id="splash-screen" class="screen active">
+            <div class="splash-content">
+                <h1 class="game-title">乱世武神录</h1>
+                <p class="game-subtitle">三国乱世 · 武神崛起</p>
+                <button class="btn-primary" onclick="Game.toScreen('create')">开始游戏</button>
+                <button class="btn-secondary" onclick="Game.loadGame()">继续游戏</button>
+            </div>
+        </div>
+
+        <!-- 角色创建 -->
+        <div id="create-screen" class="screen">
+            <div class="create-panel">
+                <h2>创建武将</h2>
+                <div class="name-input">
+                    <label>姓名</label>
+                    <input type="text" id="hero-name" placeholder="输入你的名号" maxlength="6" value="无名">
+                </div>
+                <div class="attributes-distribute">
+                    <h3>分配属性点 <span class="points-left">剩余: <b id="points-left">20</b></span></h3>
+                    <div class="attr-row">
+                        <div class="attr-info">
+                            <span class="attr-name">臂力</span>
+                            <span class="attr-desc">影响攻击、防御</span>
+                        </div>
+                        <div class="attr-control">
+                            <button onclick="Game.adjustAttr('bili', -1)">-</button>
+                            <span id="attr-bili">5</span>
+                            <button onclick="Game.adjustAttr('bili', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="attr-row">
+                        <div class="attr-info">
+                            <span class="attr-name">身法</span>
+                            <span class="attr-desc">影响速度、闪避、暴击</span>
+                        </div>
+                        <div class="attr-control">
+                            <button onclick="Game.adjustAttr('shenfa', -1)">-</button>
+                            <span id="attr-shenfa">5</span>
+                            <button onclick="Game.adjustAttr('shenfa', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="attr-row">
+                        <div class="attr-info">
+                            <span class="attr-name">根骨</span>
+                            <span class="attr-desc">影响体力、内力恢复</span>
+                        </div>
+                        <div class="attr-control">
+                            <button onclick="Game.adjustAttr('gengu', -1)">-</button>
+                            <span id="attr-gengu">5</span>
+                            <button onclick="Game.adjustAttr('gengu', 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="attr-row">
+                        <div class="attr-info">
+                            <span class="attr-name">福气</span>
+                            <span class="attr-desc">影响暴击伤害、掉落、奇遇</span>
+                        </div>
+                        <div class="attr-control">
+                            <button onclick="Game.adjustAttr('fuqi', -1)">-</button>
+                            <span id="attr-fuqi">5</span>
+                            <button onclick="Game.adjustAttr('fuqi', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="weapon-select">
+                    <h3>选择初始兵器</h3>
+                    <div class="weapon-options">
+                        <div class="weapon-option selected" data-weapon="quan" onclick="Game.selectWeapon('quan')">
+                            <span class="weapon-icon">👊</span>
+                            <span class="weapon-name">拳套</span>
+                        </div>
+                        <div class="weapon-option" data-weapon="jian" onclick="Game.selectWeapon('jian')">
+                            <span class="weapon-icon">⚔️</span>
+                            <span class="weapon-name">长剑</span>
+                        </div>
+                        <div class="weapon-option" data-weapon="dao" onclick="Game.selectWeapon('dao')">
+                            <span class="weapon-icon">🔪</span>
+                            <span class="weapon-name">大刀</span>
+                        </div>
+                        <div class="weapon-option" data-weapon="gong" onclick="Game.selectWeapon('gong')">
+                            <span class="weapon-icon">🏹</span>
+                            <span class="weapon-name">长弓</span>
+                        </div>
+                        <div class="weapon-option" data-weapon="qiang" onclick="Game.selectWeapon('qiang')">
+                            <span class="weapon-icon">🔱</span>
+                            <span class="weapon-name">长枪</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="Game.confirmCreate()">踏入乱世</button>
+            </div>
+        </div>
+
+        <!-- 主界面 -->
+        <div id="main-screen" class="screen">
+            <div class="main-header">
+                <div class="hero-bar">
+                    <div class="hero-avatar" id="hero-avatar">🎭</div>
+                    <div class="hero-info">
+                        <div class="hero-name-level">
+                            <span id="main-hero-name">无名</span>
+                            <span class="level-badge">Lv.<b id="main-hero-level">5</b></span>
+                        </div>
+                        <div class="hero-hp-bar">
+                            <div class="bar"><div class="bar-fill hp" id="main-hp-bar" style="width:100%"></div></div>
+                            <span id="main-hp-text">100/100</span>
+                        </div>
+                        <div class="hero-mp-bar">
+                            <div class="bar"><div class="bar-fill mp" id="main-mp-bar" style="width:100%"></div></div>
+                            <span id="main-mp-text">50/50</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="resource-bar">
+                    <div class="resource">
+                        <span class="resource-icon">⚡</span>
+                        <span id="main-action">100</span>
+                    </div>
+                    <div class="resource">
+                        <span class="resource-icon">💰</span>
+                        <span id="main-silver">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="main-menu">
+                <div class="menu-btn large" onclick="Game.toScreen('map')">
+                    <span class="menu-icon">⚔️</span>
+                    <span class="menu-label">闯关</span>
+                </div>
+                <div class="menu-btn" onclick="Game.toScreen('heroes')">
+                    <span class="menu-icon">👥</span>
+                    <span class="menu-label">武将</span>
+                </div>
+                <div class="menu-btn" onclick="Game.toScreen('config')">
+                    <span class="menu-icon">🎯</span>
+                    <span class="menu-label">配置</span>
+                </div>
+                <div class="menu-btn" onclick="Game.toScreen('bag')">
+                    <span class="menu-icon">🎒</span>
+                    <span class="menu-label">背包</span>
+                </div>
+                <div class="menu-btn" onclick="Game.toScreen('smith')">
+                    <span class="menu-icon">🔨</span>
+                    <span class="menu-label">铁匠铺</span>
+                </div>
+                <div class="menu-btn" onclick="Game.toScreen('tasks')">
+                    <span class="menu-icon">📜</span>
+                    <span class="menu-label">任务</span>
+                </div>
+                <div class="menu-btn" onclick="Game.toScreen('settings')">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-label">设置</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 地图探索 -->
+        <div id="map-screen" class="screen">
+            <div class="map-header">
+                <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
+                <h3 id="map-chapter-title">第一章 黄巾之乱</h3>
+                <span class="map-progress" id="map-progress">1/12</span>
+            </div>
+            <div class="map-area">
+                <div class="map-grid" id="map-grid"></div>
+            </div>
+            <div class="map-info-panel" id="map-info-panel">
+                <div class="map-event-desc" id="map-event-desc">请点击地图上的格子进行探索...</div>
+                <div class="map-actions" id="map-actions"></div>
+            </div>
+        </div>
+
+        <!-- 战斗界面 -->
+        <div id="battle-screen" class="screen">
+            <div class="battle-header">
+                <span class="battle-round">第 <b id="battle-round">1</b> 回合</span>
+                <button class="speed-btn" onclick="Battle.toggleSpeed()">×<span id="battle-speed">1</span></button>
+                <button class="auto-btn" id="auto-btn" onclick="Battle.toggleAuto()">自动</button>
+            </div>
+            <div class="battle-field">
+                <div class="enemy-side" id="enemy-side"></div>
+                <div class="vs-divider">VS</div>
+                <div class="player-side" id="player-side"></div>
+            </div>
+            <div class="battle-log" id="battle-log"></div>
+            <div class="battle-controls" id="battle-controls">
+                <div class="basic-actions">
+                    <button class="battle-btn" onclick="Battle.playerAction('attack')">普通攻击</button>
+                    <button class="battle-btn" onclick="Battle.playerAction('defend')">防御</button>
+                    <button class="battle-btn" onclick="Battle.playerAction('item')">道具</button>
+                </div>
+                <div class="skill-bar" id="skill-bar"></div>
+                <div class="ultimate-bar" id="ultimate-bar"></div>
+            </div>
+        </div>
+
+        <!-- 武将界面 -->
+        <div id="heroes-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
+                <h3>武将阵容</h3>
+            </div>
+            <div class="heroes-list" id="heroes-list"></div>
+            <div class="formation-select" id="formation-select">
+                <h4>选择阵型</h4>
+                <div class="formation-options" id="formation-options"></div>
+            </div>
+        </div>
+
+        <!-- 主角配置界面 -->
+        <div id="config-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
+                <h3>主角配置</h3>
+            </div>
+            <div class="config-panel" id="config-panel">
+                <div class="config-section" id="config-weapon">
+                    <h4>🗡️ 当前兵器</h4>
+                    <div class="config-weapon-display" id="config-weapon-display"></div>
+                    <div class="config-weapon-list" id="config-weapon-list"></div>
+                </div>
+                <div class="config-section" id="config-attrs">
+                    <h4>💪 属性分配 <span id="config-free-points">(剩余0点)</span></h4>
+                    <div class="config-attr-list" id="config-attr-list"></div>
+                </div>
+                <div class="config-section" id="config-skills">
+                    <h4>⚔️ 技能配置</h4>
+                    <div class="config-skill-slots" id="config-skill-slots"></div>
+                    <div class="config-skill-pool" id="config-skill-pool"></div>
+                </div>
+                <div class="config-section" id="config-ult">
+                    <h4>🔥 奥义配置</h4>
+                    <div class="config-ult-slot" id="config-ult-slot"></div>
+                    <div class="config-ult-pool" id="config-ult-pool"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 背包界面 -->
+        <div id="bag-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
+                <h3>背包</h3>
+            </div>
+            <div class="bag-tabs">
+                <button class="bag-tab active" onclick="UI.showBagTab('all')">全部</button>
+                <button class="bag-tab" onclick="UI.showBagTab('weapon')">兵器</button>
+                <button class="bag-tab" onclick="UI.showBagTab('material')">材料</button>
+                <button class="bag-tab" onclick="UI.showBagTab('consumable')">道具</button>
+            </div>
+            <div class="bag-grid" id="bag-grid"></div>
+        </div>
+
+        <!-- 铁匠铺 -->
+        <div id="smith-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
+                <h3>铁匠铺</h3>
+            </div>
+            <div class="smith-tabs">
+                <button class="smith-tab active" onclick="UI.showSmithTab('forge')">锻造</button>
+                <button class="smith-tab" onclick="UI.showSmithTab('compose')">合成</button>
+            </div>
+            <div class="smith-content" id="smith-content"></div>
+        </div>
+
+        <!-- 任务界面 -->
+        <div id="tasks-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
+                <h3>任务</h3>
+            </div>
+            <div class="task-list" id="task-list"></div>
+        </div>
+
+        <!-- 设置 -->
+        <div id="settings-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
+                <h3>设置</h3>
+            </div>
+            <div class="settings-list">
+                <div class="setting-item">
+                    <span>背景音乐</span>
+                    <button class="toggle-btn" onclick="Game.toggleMusic()" id="music-toggle">开</button>
+                </div>
+                <div class="setting-item">
+                    <span>音效</span>
+                    <button class="toggle-btn active" onclick="Game.toggleSound()" id="sound-toggle">开</button>
+                </div>
+                <div class="setting-item">
+                    <span>保存游戏</span>
+                    <button class="btn-primary" onclick="Game.saveGame()">立即保存</button>
+                </div>
+                <div class="setting-item danger">
+                    <span>重新开始</span>
+                    <button class="btn-danger" onclick="Game.resetGame()">删除存档</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通用弹窗 -->
+        <div id="modal-overlay" class="modal-overlay" onclick="UI.closeModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3 id="modal-title">提示</h3>
+                    <button class="modal-close" onclick="UI.closeModal()">×</button>
+                </div>
+                <div class="modal-body" id="modal-body"></div>
+                <div class="modal-footer" id="modal-footer"></div>
+            </div>
+        </div>
+
+        <!-- 战斗结算 -->
+        <div id="battle-result" class="modal-overlay">
+            <div class="result-panel">
+                <h2 id="result-title">战斗胜利</h2>
+                <div class="result-rewards" id="result-rewards"></div>
+                <button class="btn-primary" onclick="Battle.endBattle()">继续</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/battle.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
