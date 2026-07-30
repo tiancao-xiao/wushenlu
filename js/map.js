@@ -435,6 +435,21 @@ var Map = {
         var npcName = cell.npcName || cell.npc || '陌生人';
         var content = (cell.dialog || '...');
 
+        // 检查该NPC是否有已完成的任务（对话切换为感谢语）
+        var hasCompletedQuest = false;
+        var completedQuestName = '';
+        for (var ci = 0; ci < Game.state.quests.length; ci++) {
+            var cq = Game.state.quests[ci];
+            if (cq.completed && cq.location === chapter.location && cq.npc === cell.npc) {
+                hasCompletedQuest = true;
+                completedQuestName = cq.name;
+                break;
+            }
+        }
+        if (hasCompletedQuest) {
+            content = '多亏有你，「' + completedQuestName + '」已经圆满完成了！真是太感谢了！';
+        }
+
         // 根据NPC类型添加功能按钮
         var buttons = '<div class="npc-dialog-actions">';
 
@@ -470,16 +485,6 @@ var Map = {
                 if (!alreadyAccepted) {
                     buttons += '<button onclick="UI.closeModal();Game.acceptQuest(\'' + tq.id + '\')">📜 接取任务「' + tq.name + '」</button>';
                 }
-            }
-        }
-        for (var qi = 0; qi < Game.state.quests.length; qi++) {
-            var q = Game.state.quests[qi];
-            if (q.completed) continue;
-            // 匹配条件：任务 location 等于当前章节 location，且 npc 匹配
-            if (q.location === chapter.location && q.npc === cell.npc) {
-                var canSubmit = Game.canCompleteQuest(q);
-                buttons += '<button ' + (canSubmit ? '' : 'disabled') + ' onclick="UI.closeModal();Game.submitQuest(\'' + q.id + '\')">' +
-                    (canSubmit ? '✓ 提交「' + q.name + '」' : '「' + q.name + '」条件未满足') + '</button>';
             }
         }
 

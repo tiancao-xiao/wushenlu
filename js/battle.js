@@ -634,9 +634,13 @@ var Battle = {
                 }
             }
 
-            // 追踪击杀任务
-            if (enemy && enemy.id) {
-                Game.trackKill(enemy.id);
+            // 追踪击杀任务（按实际击杀数量统计）
+            var killCount = 0;
+            for (var ei = 0; ei < s.enemyUnits.length; ei++) {
+                if (s.enemyUnits[ei].id) killCount++;
+            }
+            if (killCount > 0 && enemy && enemy.id) {
+                Game.trackKill(enemy.id, killCount);
             }
 
             for (var i = 0; i < Game.state.team.length; i++) {

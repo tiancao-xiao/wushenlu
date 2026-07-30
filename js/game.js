@@ -491,17 +491,15 @@ var Game = {
     },
 
     // ===== 任务系统 =====
-    // 追踪击杀/收集等任务进度
-    trackKill: function(enemyId) {
+    // 追踪击杀任务（支持批量计数）
+    trackKill: function(enemyId, count) {
+        count = count || 1;
         if (!this.state || !this.state.quests) return;
         for (var i = 0; i < this.state.quests.length; i++) {
             var q = this.state.quests[i];
             if (q.completed) continue;
             if (q.target && q.target.kill === enemyId) {
-                q.progress = (q.progress || 0) + 1;
-                if (q.progress >= q.target.count) {
-                    // 任务完成但不自动提交，需要找NPC
-                }
+                q.progress = (q.progress || 0) + count;
             }
         }
         Game.saveGame();
