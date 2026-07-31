@@ -218,33 +218,22 @@
             </div>
         </div>
 
-        <!-- 主角配置界面 -->
+        <!-- 角色配置选择页 -->
         <div id="config-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
-                <h3>主角配置</h3>
+                <h3>角色配置</h3>
             </div>
-            <div class="config-panel" id="config-panel">
-                <div class="config-section" id="config-weapon">
-                    <h4>🗡️ 当前兵器</h4>
-                    <div class="config-weapon-display" id="config-weapon-display"></div>
-                    <div class="config-weapon-list" id="config-weapon-list"></div>
-                </div>
-                <div class="config-section" id="config-attrs">
-                    <h4>💪 属性分配 <span id="config-free-points">(剩余0点)</span></h4>
-                    <div class="config-attr-list" id="config-attr-list"></div>
-                </div>
-                <div class="config-section" id="config-skills">
-                    <h4>⚔️ 技能配置</h4>
-                    <div class="config-skill-slots" id="config-skill-slots"></div>
-                    <div class="config-skill-pool" id="config-skill-pool"></div>
-                </div>
-                <div class="config-section" id="config-ult">
-                    <h4>🔥 奥义配置</h4>
-                    <div class="config-ult-slot" id="config-ult-slot"></div>
-                    <div class="config-ult-pool" id="config-ult-pool"></div>
-                </div>
+            <div class="config-char-list" id="config-char-list"></div>
+        </div>
+
+        <!-- 单个角色配置页 -->
+        <div id="unit-config-screen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="Game.toScreen('config')">◀ 返回</button>
+                <h3 id="unit-config-title">角色配置</h3>
             </div>
+            <div class="unit-config-content" id="unit-config-content"></div>
         </div>
 
         <!-- 背包界面 -->

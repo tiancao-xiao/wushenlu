@@ -61,14 +61,13 @@ var Game = {
         this.currentScreen = screenId;
 
         if (screenId === 'main') this.updateMainUI();
-        if (screenId === 'map') Map.showChapterSelect();
-        if (screenId === 'heroes') UI.renderHeroes();
-        if (screenId === 'map') Map.init();
+        if (screenId === 'map') { Map.showChapterSelect(); Map.init(); }
         if (screenId === 'heroes') UI.renderHeroes();
         if (screenId === 'bag') UI.renderBag();
         if (screenId === 'smith') UI.renderSmith();
         if (screenId === 'tasks') UI.renderTasks();
         if (screenId === 'config') UI.renderConfig();
+        if (screenId === 'unit-config') UI.renderUnitConfig();
     },
 
     // ===== 角色创建 =====
@@ -363,6 +362,60 @@ var Game = {
         Game.saveGame();
         UI.renderConfig();
         UI.showModal('装备更换', '你已装备 <b>' + weapon.name + '</b>！<br><br>技能已根据兵器类型重新配置。');
+    },
+
+    // 为任意队伍成员装备武器
+    equipWeaponFor: function(unitId, weaponId) {
+        var unit = null;
+        for (var i = 0; i < this.state.team.length; i++) {
+            if (this.state.team[i].id === unitId) {
+                unit = this.state.team[i];
+                break;
+            }
+        }
+        if (!unit) {
+            UI.showModal('错误', '角色不存在！');
+            return;
+        }
+        var weapon = null;
+        var inv = this.state.hero.inventory;
+        if (inv[weaponId]) {
+            if (GAME_DATA.baseWeapons[weaponId]) {
+                weapon = copyObj(GAME_DATA.baseWeapons[weaponId]);
+            }
+            for (var j = 0; j < GAME_DATA.forgeList.length; j++) {
+                if (GAME_DATA.forgeList[j].id === weaponId) {
+                    weapon = copyObj(GAME_DATA.forgeList[j]);
+                    break;
+                }
+            }
+        }
+        if (!weapon) {
+            UI.showModal('错误', '该武器不在背包中！');
+            return;
+        }
+        if (!unit.isHero && unit.weapon && unit.weapon !== weapon.type) {
+            var wtName = GAME_DATA.weaponTypes[unit.weapon] ? GAME_DATA.weaponTypes[unit.weapon].name : unit.weapon;
+            UI.showModal('错误', unit.name + ' 只能使用 ' + wtName + ' 类兵器！');
+            return;
+        }
+        unit.equip = unit.equip || {};
+        unit.equip.weapon = weapon;
+        if (unit.isHero) {
+            unit.equippedSkills = [null, null];
+            unit.equippedUlt = null;
+            var wType = weapon.type;
+            var skillList = GAME_DATA.heroSkills[wType];
+            unit.knownSkills = [];
+            for (var k = 0; k < skillList.length; k++) {
+                if (unit.level >= skillList[k].levelNeed) {
+                    unit.knownSkills.push(copyObj(skillList[k]));
+                }
+            }
+        }
+        Game.saveGame();
+        UI.renderUnitConfig();
+        UI.showModal('装备更换', unit.name + ' 已装备 <b>' + weapon.name + '</b>！');
     },
 
     // ===== 主角技能配置 =====
