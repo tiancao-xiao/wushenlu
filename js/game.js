@@ -307,6 +307,18 @@ var Game = {
     // ===== 主角属性分配 =====
     // 在主角配置界面使用
     assignAttr: function(attr, delta) {
+        var hero = Game.state.hero;
+        if (!hero || !hero.freePoints || hero.freePoints <= 0) return;
+        if (delta > hero.freePoints) return;
+
+        // 确保属性值为数字类型
+        hero[attr] = (parseFloat(hero[attr]) || 0) + delta;
+        hero.freePoints -= delta;
+        Game.saveGame();
+        UI.renderConfigDetail('hero');
+    },
+    // 在主角配置界面使用
+    assignAttr: function(attr, delta) {
         var hero = this.state.hero;
         if (!hero.freePoints || hero.freePoints <= 0) return;
         if (delta > hero.freePoints) return;
