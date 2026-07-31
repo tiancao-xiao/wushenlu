@@ -324,7 +324,7 @@ var UI = {
         var count = Game.state.hero.inventory[id] || 1;
         var buttons = '';
         if (id.indexOf('miji_') === 0) {
-            buttons = '<button class="btn-confirm" onclick="Game.useMiji('' + id + ''); UI.closeModal();">研读</button>';
+            buttons = '<button class="btn-confirm" onclick="Game.useMiji(\'' + id + '\'); UI.closeModal();">研读</button>';
         }
 
         if (buttons) {
