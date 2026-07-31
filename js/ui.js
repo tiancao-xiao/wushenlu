@@ -520,15 +520,15 @@ var UI = {
                 if (wt) wIcon = wt.icon;
             }
             html += '<div class="config-char-card" onclick="UI.openUnitConfig(\'' + u.id + '\')">' +
-                '<div class="char-card-avatar">' + (u.avatar || '὆4') + '</div>' +
+                '<div class="char-card-avatar">' + (u.avatar || '👤') + '</div>' +
                 '<div class="char-card-info">' +
                     '<div class="char-card-name">' + u.name + (u.isHero ? ' <span class="hero-tag">主角</span>' : '') + '</div>' +
                     '<div class="char-card-meta">Lv.' + u.level + ' · ' + wIcon + ' ' + (u.equip && u.equip.weapon ? u.equip.weapon.name : '无兵器') + '</div>' +
                     '<div class="char-card-stats">' +
-                        '<span>Ὂa' + Math.floor(u.str) + '</span>' +
-                        '<span>Ὂ8' + Math.floor(u.agi) + '</span>' +
+                        '<span>💪' + Math.floor(u.str) + '</span>' +
+                        '<span>💨' + Math.floor(u.agi) + '</span>' +
                         '<span>❤️' + Math.floor(u.vit) + '</span>' +
-                        '<span>ἴ0' + Math.floor(u.luk) + '</span>' +
+                        '<span>🍀' + Math.floor(u.luk) + '</span>' +
                     '</div>' +
                 '</div>' +
                 '<div class="char-card-arrow">▶</div>' +
@@ -579,7 +579,7 @@ var UI = {
 
         // 基本信息
         html += '<div class="unit-info-header">' +
-            '<div class="unit-big-avatar">' + (unit.avatar || '὆4') + '</div>' +
+            '<div class="unit-big-avatar">' + (unit.avatar || '👤') + '</div>' +
             '<div class="unit-basic-info">' +
                 '<div class="unit-name">' + unit.name + (isHero ? ' <span class="hero-tag">主角</span>' : '') + '</div>' +
                 '<div class="unit-level">Lv.' + unit.level + (isHero && unit.freePoints ? ' · 可分配属性: ' + unit.freePoints + '点' : '') + '</div>' +
@@ -590,10 +590,10 @@ var UI = {
         html += '<div class="unit-attr-panel">' +
             '<h4>Ὄa 属性</h4>' +
             '<div class="attr-grid">' +
-                '<div class="attr-cell"><span class="attr-label">Ὂa 臂力</span><span class="attr-value">' + Math.floor(unit.str) + '</span></div>' +
-                '<div class="attr-cell"><span class="attr-label">Ὂ8 身法</span><span class="attr-value">' + Math.floor(unit.agi) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">💪 臂力</span><span class="attr-value">' + Math.floor(unit.str) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">💨 身法</span><span class="attr-value">' + Math.floor(unit.agi) + '</span></div>' +
                 '<div class="attr-cell"><span class="attr-label">❤️ 根骨</span><span class="attr-value">' + Math.floor(unit.vit) + '</span></div>' +
-                '<div class="attr-cell"><span class="attr-label">ἴ0 福气</span><span class="attr-value">' + Math.floor(unit.luk) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">🍀 福气</span><span class="attr-value">' + Math.floor(unit.luk) + '</span></div>' +
             '</div>' +
             '<div class="derived-stats">' +
                 '<span>⚔️ 攻击 ' + stats.atk + '</span>' +
@@ -608,10 +608,10 @@ var UI = {
             html += '<div class="free-points-panel">' +
                 '<h5>分配属性点（剩余 ' + unit.freePoints + ' 点）</h5>' +
                 '<div class="point-buttons">' +
-                    '<button onclick="Game.assignAttr(\'str\', 1)">Ὂa 臂力 +1</button>' +
-                    '<button onclick="Game.assignAttr(\'agi\', 1)">Ὂ8 身法 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'str\', 1)">💪 臂力 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'agi\', 1)">💨 身法 +1</button>' +
                     '<button onclick="Game.assignAttr(\'vit\', 1)">❤️ 根骨 +1</button>' +
-                    '<button onclick="Game.assignAttr(\'luk\', 1)">ἴ0 福气 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'luk\', 1)">🍀 福气 +1</button>' +
                 '</div>' +
             '</div>';
         }
@@ -743,7 +743,7 @@ var UI = {
                     '<b>Lv.' + bl + '</b> ' +
                     (reward.unlockUlt ? 'ἱf 解锁奥义' : '') +
                     (reward.learnSkill ? 'Ὅ6 主角可学技能' : '') +
-                    (reward.statBonus ? 'Ὂa 全属性+10%' : '') +
+                    (reward.statBonus ? '💪 全属性+10%' : '') +
                     (bl === 1 ? 'Ἰ1 初次相识礼' : '') +
                 '</div>';
             }
