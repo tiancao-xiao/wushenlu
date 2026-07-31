@@ -314,7 +314,7 @@ var Game = {
         hero[attr] += delta;
         hero.freePoints -= delta;
         Game.saveGame();
-        UI.renderUnitConfig();
+        UI.renderConfigDetail(Game.state.hero.id);
     },
 
     // ===== 主角装备更换 =====
@@ -358,7 +358,7 @@ var Game = {
         }
 
         Game.saveGame();
-        UI.renderUnitConfig(unit.id);
+        UI.renderConfigDetail('hero');
         UI.showModal('装备更换', '你已装备 <b>' + weapon.name + '</b>！<br><br>技能已根据兵器类型重新配置。');
     },
 
@@ -412,7 +412,7 @@ var Game = {
             }
         }
         Game.saveGame();
-        UI.renderUnitConfig(unit.id);
+        UI.renderConfigDetail(unit.id);
         UI.showModal('装备更换', unit.name + ' 已装备 <b>' + weapon.name + '</b>！');
     },
 
@@ -438,7 +438,7 @@ var Game = {
 
         hero.equippedSkills[slotIndex] = skillId;
         Game.saveGame();
-        UI.renderUnitConfig();
+        UI.renderConfigDetail('hero');
     },
 
     equipUlt: function(ultId) {
@@ -454,7 +454,7 @@ var Game = {
         if (!hasUlt) return;
         hero.equippedUlt = ultId;
         Game.saveGame();
-        UI.renderUnitConfig();
+        UI.renderConfigDetail('hero');
     },
 
     // ===== 羁绊系统 =====

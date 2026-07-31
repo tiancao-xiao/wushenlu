@@ -218,25 +218,24 @@
             </div>
         </div>
 
-        <!-- 角色配置选择页 -->
+        <!-- 角色配置页 -->
         <div id="config-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
                 <h3>角色配置</h3>
             </div>
             <div class="config-char-list" id="config-char-list"></div>
-        </div>
-
-        <!-- 单个角色配置页 -->
-        <div id="unit-config-screen" class="screen">
-            <div class="screen-header">
-                <button class="back-btn" onclick="Game.toScreen('config')">◀ 返回</button>
-                <h3 id="unit-config-title">角色配置</h3>
+            <div class="config-detail" id="config-detail" style="display:none;">
+                <div class="detail-header">
+                    <button class="back-btn" onclick="UI.closeConfigDetail()">◀ 返回列表</button>
+                    <h3 id="config-detail-title">角色配置</h3>
+                </div>
+                <div class="config-detail-content" id="config-detail-content"></div>
             </div>
-            <div class="unit-config-content" id="unit-config-content"></div>
         </div>
 
         <!-- 背包界面 -->
+
         <div id="bag-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="Game.toScreen('main')">◀ 返回</button>
