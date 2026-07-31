@@ -296,6 +296,9 @@ var UI = {
         } else if (GAME_DATA.consumables[id]) {
             item = GAME_DATA.consumables[id];
             desc = item.desc || '';
+        } else if (GAME_DATA.items && GAME_DATA.items[id]) {
+            item = GAME_DATA.items[id];
+            desc = item.desc || '';
         } else if (GAME_DATA.baseWeapons[id]) {
             item = GAME_DATA.baseWeapons[id];
             if (item) {
