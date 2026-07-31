@@ -51,6 +51,27 @@ var Game = {
     },
 
     // ===== 屏幕切换 =====
+    toScreen: function(screenId, options) {
+        var screens = document.querySelectorAll('.screen');
+        for (var i = 0; i < screens.length; i++) {
+            screens[i].classList.remove('active');
+        }
+        var target = document.getElementById(screenId + '-screen');
+        if (target) target.classList.add('active');
+        this.currentScreen = screenId;
+
+        if (screenId === 'main') this.updateMainUI();
+        if (screenId === 'map') { Map.showChapterSelect(); Map.init(); }
+        if (screenId === 'heroes') UI.renderHeroes();
+        if (screenId === 'bag') UI.renderBag();
+        if (screenId === 'smith') UI.renderSmith();
+        if (screenId === 'tasks') UI.renderTasks();
+        if (screenId === 'config') UI.renderConfig();
+        if (screenId === 'unit-config') {
+            if (options && options.unitId) UI.configTargetId = options.unitId;
+            UI.renderUnitConfig();
+        }
+    },
     toScreen: function(screenId) {
         var screens = document.querySelectorAll('.screen');
         for (var i = 0; i < screens.length; i++) {
