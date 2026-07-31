@@ -504,165 +504,314 @@ var UI = {
         list.innerHTML = html;
     },
 
-    // ===== 主角配置界面 =====
+    // ===== 角色配置选择页 =====
     renderConfig: function() {
         if (!Game.state) return;
-        var hero = Game.state.hero;
-        var stats = calcStats(hero);
+        var list = document.getElementById('config-char-list');
+        if (!list) return;
 
-        // --- 兵器 ---
-        var weaponDisplay = document.getElementById('config-weapon-display');
-        var weaponList = document.getElementById('config-weapon-list');
-        if (weaponDisplay) {
-            var cw = hero.equip && hero.equip.weapon;
-            var wTypeName = '无';
-            if (cw && cw.type && GAME_DATA.weaponTypes[cw.type]) {
-                wTypeName = GAME_DATA.weaponTypes[cw.type].name;
+        var html = '';
+        for (var i = 0; i < Game.state.team.length; i++) {
+            var u = Game.state.team[i];
+            var stats = calcStats(u);
+            var wIcon = '❓';
+            if (u.equip && u.equip.weapon && u.equip.weapon.type) {
+                var wt = GAME_DATA.weaponTypes[u.equip.weapon.type];
+                if (wt) wIcon = wt.icon;
             }
-            weaponDisplay.innerHTML = '<div class="config-current-weapon">' +
-                '<span class="weapon-big-icon">' + (cw ? (GAME_DATA.weaponTypes[cw.type] ? GAME_DATA.weaponTypes[cw.type].icon : '⚔️') : '❓') + '</span>' +
-                '<div><b>' + (cw ? cw.name : '无兵器') + '</b><br><small>' + wTypeName + ' · 攻击+' + (cw ? cw.atk : 0) + '</small></div>' +
+            html += '<div class="config-char-card" onclick="UI.openUnitConfig(\'' + u.id + '\')">' +
+                '<div class="char-card-avatar">' + (u.avatar || '👤') + '</div>' +
+                '<div class="char-card-info">' +
+                    '<div class="char-card-name">' + u.name + (u.isHero ? ' <span class="hero-tag">主角</span>' : '') + '</div>' +
+                    '<div class="char-card-meta">Lv.' + u.level + ' · ' + wIcon + ' ' + (u.equip && u.equip.weapon ? u.equip.weapon.name : '无兵器') + '</div>' +
+                    '<div class="char-card-stats">' +
+                        '<span>💪' + Math.floor(u.str) + '</span>' +
+                        '<span>💨' + Math.floor(u.agi) + '</span>' +
+                        '<span>❤️' + Math.floor(u.vit) + '</span>' +
+                        '<span>🍀' + Math.floor(u.luk) + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="char-card-arrow">▶</div>' +
             '</div>';
         }
-        if (weaponList) {
-            var inv = hero.inventory;
-            var wHtml = '<h5>背包中的兵器（点击装备）</h5><div class="config-weapon-grid">';
-            var hasWeapon = false;
-            for (var wid in inv) {
-                if (!inv.hasOwnProperty(wid)) continue;
-                var wItem = null;
-                if (GAME_DATA.baseWeapons[wid]) wItem = GAME_DATA.baseWeapons[wid];
-                if (!wItem) {
-                    for (var fi = 0; fi < GAME_DATA.forgeList.length; fi++) {
-                        if (GAME_DATA.forgeList[fi].id === wid) {
-                            wItem = GAME_DATA.forgeList[fi];
-                            break;
-                        }
-                    }
-                }
-                if (wItem) {
-                    hasWeapon = true;
-                    var wt = GAME_DATA.weaponTypes[wItem.type];
-                    wHtml += '<div class="config-weapon-item" onclick="Game.equipWeapon(\'' + wid + '\')">' +
-                        '<span class="w-icon">' + (wt ? wt.icon : '⚔️') + '</span>' +
-                        '<div class="w-name">' + wItem.name + '</div>' +
-                        '<div class="w-atk">攻击+' + wItem.atk + '</div>' +
-                    '</div>';
-                }
+        list.innerHTML = html;
+    },
+
+    // 当前正在配置的角色ID
+    configTargetId: null,
+
+    openUnitConfig: function(unitId) {
+        this.configTargetId = unitId;
+        Game.toScreen('unit-config');
+    },
+
+    // ===== 单个角色配置页 =====
+    renderUnitConfig: function() {
+        if (!Game.state || !this.configTargetId) return;
+
+        var unit = null;
+        for (var i = 0; i < Game.state.team.length; i++) {
+            if (Game.state.team[i].id === this.configTargetId) {
+                unit = Game.state.team[i];
+                break;
             }
-            if (!hasWeapon) wHtml += '<div style="color:#999">背包中没有其他兵器</div>';
-            wHtml += '</div>';
-            weaponList.innerHTML = wHtml;
+        }
+        if (!unit) return;
+
+        var stats = calcStats(unit);
+        var isHero = unit.isHero;
+
+        // 标题
+        var titleEl = document.getElementById('unit-config-title');
+        if (titleEl) titleEl.textContent = unit.name + ' 的配置';
+
+        var html = '<div class="unit-config-section">';
+
+        // 基本信息
+        html += '<div class="unit-info-header">' +
+            '<div class="unit-big-avatar">' + (unit.avatar || '👤') + '</div>' +
+            '<div class="unit-basic-info">' +
+                '<div class="unit-name">' + unit.name + (isHero ? ' <span class="hero-tag">主角</span>' : '') + '</div>' +
+                '<div class="unit-level">Lv.' + unit.level + (isHero && unit.freePoints ? ' · 可分配属性: ' + unit.freePoints + '点' : '') + '</div>' +
+            '</div>' +
+        '</div>';
+
+        // 属性面板
+        html += '<div class="unit-attr-panel">' +
+            '<h4>📊 属性</h4>' +
+            '<div class="attr-grid">' +
+                '<div class="attr-cell"><span class="attr-label">💪 臂力</span><span class="attr-value">' + Math.floor(unit.str) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">💨 身法</span><span class="attr-value">' + Math.floor(unit.agi) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">❤️ 根骨</span><span class="attr-value">' + Math.floor(unit.vit) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">🍀 福气</span><span class="attr-value">' + Math.floor(unit.luk) + '</span></div>' +
+            '</div>' +
+            '<div class="derived-stats">' +
+                '<span>⚔️ 攻击 ' + stats.atk + '</span>' +
+                '<span>🛡️ 防御 ' + stats.def + '</span>' +
+                '<span>⚡ 速度 ' + stats.spd + '</span>' +
+                '<span>🎯 命中 ' + stats.hit + '%</span>' +
+                '<span>💫 闪避 ' + stats.dodge + '%</span>' +
+                '<span>💥 暴击 ' + stats.crit + '%</span>' +
+            '</div>';
+
+        // 主角可分配属性点
+        if (isHero && unit.freePoints > 0) {
+            html += '<div class="free-points-panel">' +
+                '<h5>分配属性点（剩余 ' + unit.freePoints + ' 点）</h5>' +
+                '<div class="point-buttons">' +
+                    '<button onclick="Game.assignAttr(\'str\', 1)">💪 臂力 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'agi\', 1)">💨 身法 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'vit\', 1)">❤️ 根骨 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'luk\', 1)">🍀 福气 +1</button>' +
+                '</div>' +
+            '</div>';
+        }
+        html += '</div>';
+
+        // 兵器装备
+        html += '<div class="unit-weapon-panel">' +
+            '<h4>⚔️ 兵器</h4>';
+        var cw = unit.equip && unit.equip.weapon;
+        if (cw) {
+            var wt = GAME_DATA.weaponTypes[cw.type];
+            html += '<div class="current-weapon">' +
+                '<span class="weapon-icon-big">' + (wt ? wt.icon : '⚔️') + '</span>' +
+                '<div class="weapon-info">' +
+                    '<div class="weapon-name">' + cw.name + '</div>' +
+                    '<div class="weapon-meta">' + (wt ? wt.name : '') + ' · 攻击+' + cw.atk + '</div>' +
+                '</div>' +
+            '</div>';
+        } else {
+            html += '<div class="current-weapon">未装备兵器</div>';
         }
 
-        // --- 属性分配 ---
-        var freePointsEl = document.getElementById('config-free-points');
-        var attrList = document.getElementById('config-attr-list');
-        if (freePointsEl) freePointsEl.textContent = '(剩余' + (hero.freePoints || 0) + '点)';
-        if (attrList) {
-            var attrHtml = '<div class="config-attr-row"><span>💪 臂力 ' + hero.str + '</span>' +
-                (hero.freePoints > 0 ? '<button onclick="Game.assignAttr(\'str\', 1)">+</button>' : '') + '</div>' +
-                '<div class="config-attr-row"><span>💨 身法 ' + hero.agi + '</span>' +
-                (hero.freePoints > 0 ? '<button onclick="Game.assignAttr(\'agi\', 1)">+</button>' : '') + '</div>' +
-                '<div class="config-attr-row"><span>❤️ 根骨 ' + hero.vit + '</span>' +
-                (hero.freePoints > 0 ? '<button onclick="Game.assignAttr(\'vit\', 1)">+</button>' : '') + '</div>' +
-                '<div class="config-attr-row"><span>🍀 福气 ' + hero.luk + '</span>' +
-                (hero.freePoints > 0 ? '<button onclick="Game.assignAttr(\'luk\', 1)">+</button>' : '') + '</div>';
-            attrList.innerHTML = attrHtml;
-        }
-
-        // --- 技能配置 ---
-        var skillSlots = document.getElementById('config-skill-slots');
-        var skillPool = document.getElementById('config-skill-pool');
-        if (skillSlots) {
-            var sHtml = '<h5>出战技能（2个）</h5>';
-            for (var si = 0; si < 2; si++) {
-                var sid = hero.equippedSkills[si];
-                var sName = '空';
-                var sDesc = '';
-                if (sid) {
-                    for (var sk = 0; sk < hero.knownSkills.length; sk++) {
-                        if (hero.knownSkills[sk].id === sid) {
-                            sName = hero.knownSkills[sk].name;
-                            sDesc = hero.knownSkills[sk].desc;
-                            break;
-                        }
-                    }
-                }
-                sHtml += '<div class="config-slot ' + (sid ? 'filled' : 'empty') + '">' +
-                    '<b>槽位' + (si + 1) + ':</b> ' + sName +
-                    (sDesc ? '<br><small>' + sDesc + '</small>' : '') +
-                '</div>';
-            }
-            skillSlots.innerHTML = sHtml;
-        }
-        if (skillPool) {
-            var pHtml = '<h5>可用技能（点击装备到空槽位）</h5><div class="config-skill-grid">';
-            if (hero.knownSkills.length === 0) {
-                pHtml += '<div style="color:#999">暂无可用技能</div>';
-            } else {
-                for (var ki = 0; ki < hero.knownSkills.length; ki++) {
-                    var ks = hero.knownSkills[ki];
-                    var equipped = false;
-                    for (var ej = 0; ej < hero.equippedSkills.length; ej++) {
-                        if (hero.equippedSkills[ej] === ks.id) { equipped = true; break; }
-                    }
-                    pHtml += '<div class="config-skill-item ' + (equipped ? 'equipped' : '') + '" ' +
-                        (equipped ? '' : 'onclick="UI.equipSkillToSlot(\'' + ks.id + '\')"') + '>' +
-                        '<b>' + ks.name + '</b><br>' +
-                        '<small>' + ks.desc + '</small><br>' +
-                        '<small style="color:#999">' + ks.cost + 'MP · CD' + ks.cd + '</small>' +
-                    '</div>';
-                }
-            }
-            pHtml += '</div>';
-            skillPool.innerHTML = pHtml;
-        }
-
-        // --- 奥义配置 ---
-        var ultSlot = document.getElementById('config-ult-slot');
-        var ultPool = document.getElementById('config-ult-pool');
-        if (ultSlot) {
-            var uHtml = '<h5>出战奥义（1个）</h5>';
-            var uid = hero.equippedUlt;
-            var uName = '空';
-            var uDesc = '';
-            if (uid) {
-                for (var uk = 0; uk < hero.knownUlts.length; uk++) {
-                    if (hero.knownUlts[uk].id === uid) {
-                        uName = hero.knownUlts[uk].name;
-                        uDesc = hero.knownUlts[uk].desc;
+        // 兵器更换列表
+        html += '<h5>更换兵器</h5><div class="weapon-change-grid">';
+        var inv = Game.state.hero.inventory;
+        var hasAny = false;
+        for (var wid in inv) {
+            if (!inv.hasOwnProperty(wid)) continue;
+            var wItem = null;
+            if (GAME_DATA.baseWeapons[wid]) wItem = GAME_DATA.baseWeapons[wid];
+            if (!wItem) {
+                for (var fi = 0; fi < GAME_DATA.forgeList.length; fi++) {
+                    if (GAME_DATA.forgeList[fi].id === wid) {
+                        wItem = GAME_DATA.forgeList[fi];
                         break;
                     }
                 }
             }
-            uHtml += '<div class="config-slot ' + (uid ? 'filled' : 'empty') + '">' +
-                '<b>奥义槽:</b> ' + uName +
-                (uDesc ? '<br><small>' + uDesc + '</small>' : '') +
-            '</div>';
-            ultSlot.innerHTML = uHtml;
+            if (wItem) {
+                // 武将检查武器类型限制
+                if (!isHero && unit.weapon && unit.weapon !== wItem.type) continue;
+                hasAny = true;
+                var wtt = GAME_DATA.weaponTypes[wItem.type];
+                var isEquipped = cw && cw.id === wItem.id;
+                html += '<div class="weapon-change-item ' + (isEquipped ? 'equipped' : '') + '" ' +
+                    (isEquipped ? '' : 'onclick="Game.equipWeaponFor(\'' + unit.id + '\', \'' + wid + '\')"') + '>' +
+                    '<span class="w-icon">' + (wtt ? wtt.icon : '⚔️') + '</span>' +
+                    '<div class="w-name">' + wItem.name + '</div>' +
+                    '<div class="w-atk">攻击+' + wItem.atk + '</div>' +
+                    (isEquipped ? '<div class="equipped-mark">✓ 已装备</div>' : '') +
+                '</div>';
+            }
         }
-        if (ultPool) {
-            var upHtml = '<h5>可用奥义（点击装备）</h5><div class="config-ult-grid">';
-            if (hero.knownUlts.length === 0) {
-                upHtml += '<div style="color:#999">暂无可用奥义<br><small>提升武将羁绊至2级可解锁其奥义</small></div>';
-            } else {
-                for (var ui = 0; ui < hero.knownUlts.length; ui++) {
-                    var ku = hero.knownUlts[ui];
-                    var equipped = hero.equippedUlt === ku.id;
-                    upHtml += '<div class="config-ult-item ' + (equipped ? 'equipped' : '') + '" ' +
-                        (equipped ? '' : 'onclick="Game.equipUlt(\'' + ku.id + '\')"') + '>' +
-                        '<b>' + ku.name + '</b><br>' +
-                        '<small>' + ku.desc + '</small>' +
-                    '</div>';
+        if (!hasAny) html += '<div style="color:#999;font-size:13px;">背包中没有可装备的兵器</div>';
+        html += '</div></div>';
+
+        // 技能面板（主角可编辑，武将只读）
+        html += '<div class="unit-skill-panel">' +
+            '<h4>🔥 技能</h4>';
+
+        if (isHero) {
+            // 主角：显示已装备技能槽位 + 可更换
+            html += '<div class="skill-slots">' +
+                '<h5>出战技能</h5>';
+            for (var si = 0; si < 2; si++) {
+                var sid = unit.equippedSkills[si];
+                var sName = '空槽位';
+                var sDesc = '点击选择技能';
+                if (sid) {
+                    for (var sk = 0; sk < unit.knownSkills.length; sk++) {
+                        if (unit.knownSkills[sk].id === sid) {
+                            sName = unit.knownSkills[sk].name;
+                            sDesc = unit.knownSkills[sk].desc + ' · ' + unit.knownSkills[sk].cost + 'MP · CD' + unit.knownSkills[sk].cd;
+                            break;
+                        }
+                    }
+                }
+                html += '<div class="skill-slot" onclick="UI.showSkillSelectModal(' + si + ')">' +
+                    '<div class="slot-label">技能 ' + (si + 1) + '</div>' +
+                    '<div class="slot-skill-name">' + sName + '</div>' +
+                    '<div class="slot-skill-desc">' + sDesc + '</div>' +
+                '</div>';
+            }
+            html += '</div>';
+
+            // 奥义
+            html += '<div class="ult-slot">' +
+                '<h5>出战奥义</h5>';
+            var uid = unit.equippedUlt;
+            var uName = '空槽位';
+            var uDesc = '点击选择奥义';
+            if (uid) {
+                for (var uk = 0; uk < unit.knownUlts.length; uk++) {
+                    if (unit.knownUlts[uk].id === uid) {
+                        uName = unit.knownUlts[uk].name;
+                        uDesc = unit.knownUlts[uk].desc;
+                        break;
+                    }
                 }
             }
-            upHtml += '</div>';
-            ultPool.innerHTML = upHtml;
+            html += '<div class="skill-slot" onclick="UI.showUltSelectModal()">' +
+                '<div class="slot-label">奥义</div>' +
+                '<div class="slot-skill-name">' + uName + '</div>' +
+                '<div class="slot-skill-desc">' + uDesc + '</div>' +
+            '</div>';
+            html += '</div>';
+        } else {
+            // 武将：只读显示
+            html += '<div class="hero-skills-readonly">' +
+                '<div class="skill-item"><b>技能1：</b>' + unit.skills.skill1.name + '<br><small>' + unit.skills.skill1.desc + '</small></div>' +
+                '<div class="skill-item"><b>技能2：</b>' + unit.skills.skill2.name + '<br><small>' + unit.skills.skill2.desc + '</small></div>' +
+            '</div>';
+            if (unit.bondLevel >= 2) {
+                html += '<div class="ult-readonly">' +
+                    '<b>奥义：</b>' + unit.skills.ult.name + '<br><small>' + unit.skills.ult.desc + '</small>' +
+                '</div>';
+            } else {
+                html += '<div class="ult-locked">🔒 奥义未解锁（羁绊Lv.2开启）</div>';
+            }
         }
+        html += '</div>';
+
+        // 羁绊（武将）
+        if (!isHero) {
+            html += '<div class="unit-bond-panel">' +
+                '<h4>💝 羁绊</h4>' +
+                '<div class="bond-level">Lv.' + (unit.bondLevel || 0) + ' / 5</div>' +
+                '<div class="bond-bar"><div class="bond-fill" style="width:' + (((unit.bondExp || 0) / (GAME_DATA.bondConfig.expNeed[(unit.bondLevel || 0) + 1] || 1)) * 100) + '%"></div></div>' +
+                '<div class="bond-rewards">';
+            for (var bl = 1; bl <= 5; bl++) {
+                var reward = GAME_DATA.bondConfig.rewards[bl];
+                var unlocked = (unit.bondLevel || 0) >= bl;
+                html += '<div class="bond-reward ' + (unlocked ? 'unlocked' : 'locked') + '">' +
+                    '<b>Lv.' + bl + '</b> ' +
+                    (reward.unlockUlt ? '🌟 解锁奥义' : '') +
+                    (reward.learnSkill ? '📖 主角可学技能' : '') +
+                    (reward.statBonus ? '💪 全属性+10%' : '') +
+                    (bl === 1 ? '🎁 初次相识礼' : '') +
+                '</div>';
+            }
+            html += '</div>';
+            if (unit.bondLevel >= 4) {
+                var hero = Game.state.hero;
+                var ultId = unit.skills.ult.id || (unit.id + '_ult');
+                var hasLearned = false;
+                for (var hi = 0; hi < hero.knownUlts.length; hi++) {
+                    if (hero.knownUlts[hi].id === ultId) { hasLearned = true; break; }
+                }
+                if (!hasLearned) {
+                    html += '<button class="btn-primary" onclick="Game.learnHeroSkill(\'' + unit.id + '\')">📖 学习该武将奥义</button>';
+                } else {
+                    html += '<div style="color:#6b8e6b;font-size:13px;">✓ 已学会该武将奥义</div>';
+                }
+            }
+            html += '</div>';
+        }
+
+        html += '</div>';
+
+        var contentEl = document.getElementById('unit-config-content');
+        if (contentEl) contentEl.innerHTML = html;
     },
 
-    // 点击技能池中的技能，装备到第一个空槽位
+    // 主角技能选择弹窗
+    showSkillSelectModal: function(slotIndex) {
+        var hero = Game.state.hero;
+        if (!hero.knownSkills || hero.knownSkills.length === 0) {
+            UI.showModal('提示', '暂无可用技能');
+            return;
+        }
+        var content = '<div style="max-height:300px;overflow-y:auto;">';
+        for (var i = 0; i < hero.knownSkills.length; i++) {
+            var sk = hero.knownSkills[i];
+            var equipped = false;
+            for (var j = 0; j < hero.equippedSkills.length; j++) {
+                if (hero.equippedSkills[j] === sk.id) { equipped = true; break; }
+            }
+            content += '<div style="padding:8px;border-bottom:1px solid #333;' + (equipped ? 'opacity:0.5;' : 'cursor:pointer;') + '" ' +
+                (equipped ? '' : 'onclick="UI.closeModal();Game.equipSkill(' + slotIndex + ', \'' + sk.id + '\');UI.renderUnitConfig();"') + '>' +
+                '<b>' + sk.name + '</b> ' + (equipped ? '<span style="color:#999">[已装备]</span>' : '') + '<br>' +
+                '<small style="color:#999">' + sk.desc + ' · ' + sk.cost + 'MP · CD' + sk.cd + '</small>' +
+            '</div>';
+        }
+        content += '</div>';
+        UI.showModal('选择技能', content);
+    },
+
+    // 主角奥义选择弹窗
+    showUltSelectModal: function() {
+        var hero = Game.state.hero;
+        if (!hero.knownUlts || hero.knownUlts.length === 0) {
+            UI.showModal('提示', '暂无可用奥义<br><small>提升武将羁绊至2级可解锁其奥义</small>');
+            return;
+        }
+        var content = '<div style="max-height:300px;overflow-y:auto;">';
+        for (var i = 0; i < hero.knownUlts.length; i++) {
+            var ul = hero.knownUlts[i];
+            var equipped = hero.equippedUlt === ul.id;
+            content += '<div style="padding:8px;border-bottom:1px solid #333;' + (equipped ? 'opacity:0.5;' : 'cursor:pointer;') + '" ' +
+                (equipped ? '' : 'onclick="UI.closeModal();Game.equipUlt(\'' + ul.id + '\');UI.renderUnitConfig();"') + '>' +
+                '<b>' + ul.name + '</b> ' + (equipped ? '<span style="color:#999">[已装备]</span>' : '') + '<br>' +
+                '<small style="color:#999">' + ul.desc + '</small>' +
+            '</div>';
+        }
+        content += '</div>';
+        UI.showModal('选择奥义', content);
+    },
+
+    // 点击技能池中的技能，装备到第一个空槽位（旧版兼容）
     equipSkillToSlot: function(skillId) {
         var hero = Game.state.hero;
         for (var i = 0; i < hero.equippedSkills.length; i++) {
