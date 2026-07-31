@@ -544,10 +544,6 @@ var UI = {
         UI.configTargetId = unitId;
         Game.toScreen('unit-config');
     },
-        Game.toScreen('unit-config', { unitId: unitId });
-    },
-
-    // ===== 单个角色配置页 =====
     // ===== 单个角色配置页 =====
     renderUnitConfig: function() {
         if (!Game.state || !this.configTargetId) return;
