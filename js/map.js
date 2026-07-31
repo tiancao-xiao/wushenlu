@@ -55,11 +55,11 @@ var Map = {
         }
         Game.state.currentChapter = chapterId;
         Game.saveGame();
-        this.init(chapterId);
+        this.init(chapterId, true);
     },
 
     // ===== 进入具体章节 =====
-    init: function(chapterId) {
+    init: function(chapterId, resetPos) {
         if (!Game.state) return;
         chapterId = chapterId || Game.state.currentChapter || 1;
 
@@ -87,19 +87,9 @@ var Map = {
                 visitedCells: [],
                 defeatedCells: []
             };
-        } else {
-            // 每次重新进入章节，重置位置到起点（防止卡关）
+        } else if (resetPos) {
+            // 只有从章节选择重新进入时，才重置位置到起点（防止卡关）
             Game.state.chapterStates[chapterStateKey].currentPos = { x: chapter.startPos.x, y: chapter.startPos.y };
-        }
-        var cs = Game.state.chapterStates[chapterStateKey];
-        var chapterStateKey = 'chapter_' + chapterId;
-        if (!Game.state.chapterStates) Game.state.chapterStates = {};
-        if (!Game.state.chapterStates[chapterStateKey]) {
-            Game.state.chapterStates[chapterStateKey] = {
-                currentPos: { x: chapter.startPos.x, y: chapter.startPos.y },
-                visitedCells: [],
-                defeatedCells: []
-            };
         }
         var cs = Game.state.chapterStates[chapterStateKey];
 
