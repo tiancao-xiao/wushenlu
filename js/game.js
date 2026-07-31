@@ -67,7 +67,6 @@ var Game = {
         if (screenId === 'smith') UI.renderSmith();
         if (screenId === 'tasks') UI.renderTasks();
         if (screenId === 'config') UI.renderConfig();
-        if (screenId === 'unit-config') UI.renderUnitConfig();
     },
     // ===== 角色创建 =====
     // 开局5级，20点自由分配
@@ -315,7 +314,7 @@ var Game = {
         hero[attr] += delta;
         hero.freePoints -= delta;
         Game.saveGame();
-        UI.renderConfig();
+        UI.renderUnitConfig();
     },
 
     // ===== 主角装备更换 =====
@@ -359,7 +358,7 @@ var Game = {
         }
 
         Game.saveGame();
-        UI.renderConfig();
+        UI.renderUnitConfig(unit.id);
         UI.showModal('装备更换', '你已装备 <b>' + weapon.name + '</b>！<br><br>技能已根据兵器类型重新配置。');
     },
 
@@ -413,7 +412,7 @@ var Game = {
             }
         }
         Game.saveGame();
-        UI.renderUnitConfig();
+        UI.renderUnitConfig(unit.id);
         UI.showModal('装备更换', unit.name + ' 已装备 <b>' + weapon.name + '</b>！');
     },
 
@@ -439,7 +438,7 @@ var Game = {
 
         hero.equippedSkills[slotIndex] = skillId;
         Game.saveGame();
-        UI.renderConfig();
+        UI.renderUnitConfig();
     },
 
     equipUlt: function(ultId) {
@@ -455,7 +454,7 @@ var Game = {
         if (!hasUlt) return;
         hero.equippedUlt = ultId;
         Game.saveGame();
-        UI.renderConfig();
+        UI.renderUnitConfig();
     },
 
     // ===== 羁绊系统 =====

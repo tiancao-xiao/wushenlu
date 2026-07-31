@@ -520,15 +520,15 @@ var UI = {
                 if (wt) wIcon = wt.icon;
             }
             html += '<div class="config-char-card" onclick="UI.openUnitConfig(\'' + u.id + '\')">' +
-                '<div class="char-card-avatar">' + (u.avatar || '👤') + '</div>' +
+                '<div class="char-card-avatar">' + (u.avatar || '὆4') + '</div>' +
                 '<div class="char-card-info">' +
                     '<div class="char-card-name">' + u.name + (u.isHero ? ' <span class="hero-tag">主角</span>' : '') + '</div>' +
                     '<div class="char-card-meta">Lv.' + u.level + ' · ' + wIcon + ' ' + (u.equip && u.equip.weapon ? u.equip.weapon.name : '无兵器') + '</div>' +
                     '<div class="char-card-stats">' +
-                        '<span>💪' + Math.floor(u.str) + '</span>' +
-                        '<span>💨' + Math.floor(u.agi) + '</span>' +
+                        '<span>Ὂa' + Math.floor(u.str) + '</span>' +
+                        '<span>Ὂ8' + Math.floor(u.agi) + '</span>' +
                         '<span>❤️' + Math.floor(u.vit) + '</span>' +
-                        '<span>🍀' + Math.floor(u.luk) + '</span>' +
+                        '<span>ἴ0' + Math.floor(u.luk) + '</span>' +
                     '</div>' +
                 '</div>' +
                 '<div class="char-card-arrow">▶</div>' +
@@ -537,30 +537,41 @@ var UI = {
         list.innerHTML = html;
     },
 
-    // 当前正在配置的角色ID
-    configTargetId: null,
-
     openUnitConfig: function(unitId) {
-        UI.configTargetId = unitId;
+        var screen = document.getElementById('unit-config-screen');
+        if (screen) screen.setAttribute('data-unit-id', unitId);
         Game.toScreen('unit-config');
+        UI.renderUnitConfig(unitId);
     },
+
     // ===== 单个角色配置页 =====
-    renderUnitConfig: function() {
-        if (!Game.state || !this.configTargetId) return;
+    renderUnitConfig: function(unitId) {
+        if (!unitId) {
+            var screen = document.getElementById('unit-config-screen');
+            if (screen) unitId = screen.getAttribute('data-unit-id');
+        }
+        if (!Game.state || !unitId) {
+            var contentEl0 = document.getElementById('unit-config-content');
+            if (contentEl0) contentEl0.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">无法加载角色数据</div>';
+            return;
+        }
 
         var unit = null;
         for (var i = 0; i < Game.state.team.length; i++) {
-            if (Game.state.team[i].id === this.configTargetId) {
+            if (Game.state.team[i].id === unitId) {
                 unit = Game.state.team[i];
                 break;
             }
         }
-        if (!unit) return;
+        if (!unit) {
+            var contentEl1 = document.getElementById('unit-config-content');
+            if (contentEl1) contentEl1.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">找不到角色: ' + unitId + '</div>';
+            return;
+        }
 
         var stats = calcStats(unit);
         var isHero = unit.isHero;
 
-        // 标题
         var titleEl = document.getElementById('unit-config-title');
         if (titleEl) titleEl.textContent = unit.name + ' 的配置';
 
@@ -568,7 +579,7 @@ var UI = {
 
         // 基本信息
         html += '<div class="unit-info-header">' +
-            '<div class="unit-big-avatar">' + (unit.avatar || '👤') + '</div>' +
+            '<div class="unit-big-avatar">' + (unit.avatar || '὆4') + '</div>' +
             '<div class="unit-basic-info">' +
                 '<div class="unit-name">' + unit.name + (isHero ? ' <span class="hero-tag">主角</span>' : '') + '</div>' +
                 '<div class="unit-level">Lv.' + unit.level + (isHero && unit.freePoints ? ' · 可分配属性: ' + unit.freePoints + '点' : '') + '</div>' +
@@ -577,31 +588,30 @@ var UI = {
 
         // 属性面板
         html += '<div class="unit-attr-panel">' +
-            '<h4>📊 属性</h4>' +
+            '<h4>Ὄa 属性</h4>' +
             '<div class="attr-grid">' +
-                '<div class="attr-cell"><span class="attr-label">💪 臂力</span><span class="attr-value">' + Math.floor(unit.str) + '</span></div>' +
-                '<div class="attr-cell"><span class="attr-label">💨 身法</span><span class="attr-value">' + Math.floor(unit.agi) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">Ὂa 臂力</span><span class="attr-value">' + Math.floor(unit.str) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">Ὂ8 身法</span><span class="attr-value">' + Math.floor(unit.agi) + '</span></div>' +
                 '<div class="attr-cell"><span class="attr-label">❤️ 根骨</span><span class="attr-value">' + Math.floor(unit.vit) + '</span></div>' +
-                '<div class="attr-cell"><span class="attr-label">🍀 福气</span><span class="attr-value">' + Math.floor(unit.luk) + '</span></div>' +
+                '<div class="attr-cell"><span class="attr-label">ἴ0 福气</span><span class="attr-value">' + Math.floor(unit.luk) + '</span></div>' +
             '</div>' +
             '<div class="derived-stats">' +
                 '<span>⚔️ 攻击 ' + stats.atk + '</span>' +
-                '<span>🛡️ 防御 ' + stats.def + '</span>' +
+                '<span>Ὦ1️ 防御 ' + stats.def + '</span>' +
                 '<span>⚡ 速度 ' + stats.spd + '</span>' +
-                '<span>🎯 命中 ' + stats.hit + '%</span>' +
-                '<span>💫 闪避 ' + stats.dodge + '%</span>' +
-                '<span>💥 暴击 ' + stats.crit + '%</span>' +
+                '<span>Ἲf 命中 ' + stats.hit + '%</span>' +
+                '<span>Ὂb 闪避 ' + stats.dodge + '%</span>' +
+                '<span>Ὂ5 暴击 ' + stats.crit + '%</span>' +
             '</div>';
 
-        // 主角可分配属性点
         if (isHero && unit.freePoints > 0) {
             html += '<div class="free-points-panel">' +
                 '<h5>分配属性点（剩余 ' + unit.freePoints + ' 点）</h5>' +
                 '<div class="point-buttons">' +
-                    '<button onclick="Game.assignAttr(\'str\', 1)">💪 臂力 +1</button>' +
-                    '<button onclick="Game.assignAttr(\'agi\', 1)">💨 身法 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'str\', 1)">Ὂa 臂力 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'agi\', 1)">Ὂ8 身法 +1</button>' +
                     '<button onclick="Game.assignAttr(\'vit\', 1)">❤️ 根骨 +1</button>' +
-                    '<button onclick="Game.assignAttr(\'luk\', 1)">🍀 福气 +1</button>' +
+                    '<button onclick="Game.assignAttr(\'luk\', 1)">ἴ0 福气 +1</button>' +
                 '</div>' +
             '</div>';
         }
@@ -624,7 +634,6 @@ var UI = {
             html += '<div class="current-weapon">未装备兵器</div>';
         }
 
-        // 兵器更换列表
         html += '<h5>更换兵器</h5><div class="weapon-change-grid">';
         var inv = Game.state.hero.inventory;
         var hasAny = false;
@@ -641,7 +650,6 @@ var UI = {
                 }
             }
             if (wItem) {
-                // 武将检查武器类型限制
                 if (!isHero && unit.weapon && unit.weapon !== wItem.type) continue;
                 hasAny = true;
                 var wtt = GAME_DATA.weaponTypes[wItem.type];
@@ -658,12 +666,11 @@ var UI = {
         if (!hasAny) html += '<div style="color:#999;font-size:13px;">背包中没有可装备的兵器</div>';
         html += '</div></div>';
 
-        // 技能面板（主角可编辑，武将只读）
+        // 技能面板
         html += '<div class="unit-skill-panel">' +
-            '<h4>🔥 技能</h4>';
+            '<h4>ὒ5 技能</h4>';
 
         if (isHero) {
-            // 主角：显示已装备技能槽位 + 可更换
             html += '<div class="skill-slots">' +
                 '<h5>出战技能</h5>';
             for (var si = 0; si < 2; si++) {
@@ -687,7 +694,6 @@ var UI = {
             }
             html += '</div>';
 
-            // 奥义
             html += '<div class="ult-slot">' +
                 '<h5>出战奥义</h5>';
             var uid = unit.equippedUlt;
@@ -709,7 +715,6 @@ var UI = {
             '</div>';
             html += '</div>';
         } else {
-            // 武将：只读显示
             html += '<div class="hero-skills-readonly">' +
                 '<div class="skill-item"><b>技能1：</b>' + unit.skills.skill1.name + '<br><small>' + unit.skills.skill1.desc + '</small></div>' +
                 '<div class="skill-item"><b>技能2：</b>' + unit.skills.skill2.name + '<br><small>' + unit.skills.skill2.desc + '</small></div>' +
@@ -719,7 +724,7 @@ var UI = {
                     '<b>奥义：</b>' + unit.skills.ult.name + '<br><small>' + unit.skills.ult.desc + '</small>' +
                 '</div>';
             } else {
-                html += '<div class="ult-locked">🔒 奥义未解锁（羁绊Lv.2开启）</div>';
+                html += '<div class="ult-locked">ὑ2 奥义未解锁（羁绊Lv.2开启）</div>';
             }
         }
         html += '</div>';
@@ -727,7 +732,7 @@ var UI = {
         // 羁绊（武将）
         if (!isHero) {
             html += '<div class="unit-bond-panel">' +
-                '<h4>💝 羁绊</h4>' +
+                '<h4>Ὁd 羁绊</h4>' +
                 '<div class="bond-level">Lv.' + (unit.bondLevel || 0) + ' / 5</div>' +
                 '<div class="bond-bar"><div class="bond-fill" style="width:' + (((unit.bondExp || 0) / (GAME_DATA.bondConfig.expNeed[(unit.bondLevel || 0) + 1] || 1)) * 100) + '%"></div></div>' +
                 '<div class="bond-rewards">';
@@ -736,10 +741,10 @@ var UI = {
                 var unlocked = (unit.bondLevel || 0) >= bl;
                 html += '<div class="bond-reward ' + (unlocked ? 'unlocked' : 'locked') + '">' +
                     '<b>Lv.' + bl + '</b> ' +
-                    (reward.unlockUlt ? '🌟 解锁奥义' : '') +
-                    (reward.learnSkill ? '📖 主角可学技能' : '') +
-                    (reward.statBonus ? '💪 全属性+10%' : '') +
-                    (bl === 1 ? '🎁 初次相识礼' : '') +
+                    (reward.unlockUlt ? 'ἱf 解锁奥义' : '') +
+                    (reward.learnSkill ? 'Ὅ6 主角可学技能' : '') +
+                    (reward.statBonus ? 'Ὂa 全属性+10%' : '') +
+                    (bl === 1 ? 'Ἰ1 初次相识礼' : '') +
                 '</div>';
             }
             html += '</div>';
@@ -751,7 +756,7 @@ var UI = {
                     if (hero.knownUlts[hi].id === ultId) { hasLearned = true; break; }
                 }
                 if (!hasLearned) {
-                    html += '<button class="btn-primary" onclick="Game.learnHeroSkill(\'' + unit.id + '\')">📖 学习该武将奥义</button>';
+                    html += '<button class="btn-primary" onclick="Game.learnHeroSkill(\'' + unit.id + '\')">Ὅ6 学习该武将奥义</button>';
                 } else {
                     html += '<div style="color:#6b8e6b;font-size:13px;">✓ 已学会该武将奥义</div>';
                 }
