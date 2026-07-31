@@ -19,6 +19,15 @@ var Game = {
         if (saved) {
             try {
                 this.state = JSON.parse(saved);
+                // 修复：确保 hero 引用指向 team 数组中的主角对象
+                if (this.state && this.state.team) {
+                    for (var i = 0; i < this.state.team.length; i++) {
+                        if (this.state.team[i].id === 'hero') {
+                            this.state.hero = this.state.team[i];
+                            break;
+                        }
+                    }
+                }
                 // 兼容旧存档：补充 teamPositions
                 if (!this.state.teamPositions) {
                     this.state.teamPositions = {};
@@ -304,29 +313,27 @@ var Game = {
         }
     },
 
-    // ===== 主角属性分配 =====
+    // ===== 主角装备更换 =====
     // 在主角配置界面使用
     assignAttr: function(attr, delta) {
-        var hero = Game.state.hero;
-        if (!hero || !hero.freePoints || hero.freePoints <= 0) return;
+        // 从 team 数组中找到主角对象（确保修改的是渲染引用的对象）
+        var hero = null;
+        for (var i = 0; i < Game.state.team.length; i++) {
+            if (Game.state.team[i].id === 'hero') {
+                hero = Game.state.team[i];
+                break;
+            }
+        }
+        if (!hero || hero.freePoints === undefined || hero.freePoints <= 0) return;
         if (delta > hero.freePoints) return;
 
-        // 确保属性值为数字类型
         hero[attr] = (parseFloat(hero[attr]) || 0) + delta;
         hero.freePoints -= delta;
+
+        // 同步 Game.state.hero 引用
+        Game.state.hero = hero;
         Game.saveGame();
         UI.renderConfigDetail('hero');
-    },
-    // 在主角配置界面使用
-    assignAttr: function(attr, delta) {
-        var hero = this.state.hero;
-        if (!hero.freePoints || hero.freePoints <= 0) return;
-        if (delta > hero.freePoints) return;
-
-        hero[attr] += delta;
-        hero.freePoints -= delta;
-        Game.saveGame();
-        UI.renderConfigDetail(Game.state.hero.id);
     },
 
     // ===== 主角装备更换 =====
