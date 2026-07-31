@@ -322,16 +322,7 @@ var UI = {
         if (!item) return;
 
         var count = Game.state.hero.inventory[id] || 1;
-        var buttons = '';
-        if (category === 'item') {
-            }
-        }
-
-        if (buttons) {
-            this.showModal(item.name, desc + '<br><br>持有数量：' + count, buttons);
-        } else {
-            this.showModal(item.name, desc + '<br><br>持有数量：' + count);
-        }
+        this.showModal(item.name, desc + '<br><br>持有数量：' + count);
     },
 
     // ===== 铁匠铺 =====
