@@ -37,41 +37,73 @@ var GAME_DATA = {
 
     // ===== 主角技能库（按兵器类型分级） =====
     // 主角装备某类兵器时，只能使用该类兵器的技能
+    // 5级开局默认技能，10/20/25/40级技能，15/30/50级奥义
     heroSkills: {
         quan: [
-            { id: 'quan_bengshan', name: '崩山捶', type: 'skill', cost: 15, cd: 3, levelNeed: 5, desc: '单体150%伤害，概率眩晕', effect: { dmg: 1.5, stunChance: 0.25 } },
-            { id: 'quan_suigu', name: '碎骨拳', type: 'skill', cost: 20, cd: 3, levelNeed: 15, desc: '单体180%伤害，破防20%', effect: { dmg: 1.8, pierce: 0.2 } },
-            { id: 'quan_qisha', name: '七杀拳', type: 'skill', cost: 30, cd: 4, levelNeed: 30, desc: '牺牲10%HP，下3次攻击+60%', effect: { hpCost: 0.1, buff: { dmg: 0.6, hits: 3 } } }
+            { id: 'quan_bengshan', name: '崩山捶', type: 'skill', weaponType: 'quan', cost: 15, cd: 3, levelNeed: 5, desc: '单体150%伤害，概率眩晕', effect: { dmg: 1.5, stunChance: 0.25 } },
+            { id: 'quan_handi', name: '撼地拳', type: 'skill', weaponType: 'quan', cost: 18, cd: 3, levelNeed: 10, desc: '单体130%伤害，降低敌方速度20%', effect: { dmg: 1.3, debuffSpeed: 0.2 } },
+            { id: 'quan_suigu', name: '碎骨拳', type: 'skill', weaponType: 'quan', cost: 22, cd: 3, levelNeed: 20, desc: '单体180%伤害，破防20%', effect: { dmg: 1.8, pierce: 0.2 } },
+            { id: 'quan_huxiao', name: '虎啸拳', type: 'skill', weaponType: 'quan', cost: 25, cd: 4, levelNeed: 25, desc: '扇形范围110%伤害，概率恐惧', effect: { fanDmg: 1.1, fearChance: 0.2 } },
+            { id: 'quan_qisha', name: '七杀拳', type: 'skill', weaponType: 'quan', cost: 35, cd: 4, levelNeed: 40, desc: '牺牲10%HP，下3次攻击+60%', effect: { hpCost: 0.1, buff: { dmg: 0.6, hits: 3 } } }
         ],
         jian: [
-            { id: 'jian_bairen', name: '白刃斩', type: 'skill', cost: 15, cd: 3, levelNeed: 5, desc: '单体140%伤害，高暴击率', effect: { dmg: 1.4, critBonus: 0.15 } },
-            { id: 'jian_zhuifeng', name: '追风剑', type: 'skill', cost: 20, cd: 3, levelNeed: 15, desc: '单体170%伤害，闪避后反击', effect: { dmg: 1.7, dodgeCounter: true } },
-            { id: 'jian_liumai', name: '六脉剑气', type: 'skill', cost: 35, cd: 4, levelNeed: 30, desc: '直线2格180%伤害', effect: { lineDmg: 1.8 } }
+            { id: 'jian_bairen', name: '白刃斩', type: 'skill', weaponType: 'jian', cost: 15, cd: 3, levelNeed: 5, desc: '单体140%伤害，高暴击率', effect: { dmg: 1.4, critBonus: 0.15 } },
+            { id: 'jian_huifeng', name: '回风拂柳', type: 'skill', weaponType: 'jian', cost: 18, cd: 3, levelNeed: 10, desc: '2段攻击每段75%，提升自身闪避20%', effect: { hits: 2, dmg: 0.75, selfBuff: { dodge: 0.2, turns: 2 } } },
+            { id: 'jian_zhuifeng', name: '追风剑', type: 'skill', weaponType: 'jian', cost: 22, cd: 3, levelNeed: 20, desc: '单体170%伤害，必定命中', effect: { dmg: 1.7, hit: 1 } },
+            { id: 'jian_pokong', name: '破空斩', type: 'skill', weaponType: 'jian', cost: 28, cd: 4, levelNeed: 25, desc: '穿透2格160%伤害', effect: { pierceDmg: 1.6, range: 2 } },
+            { id: 'jian_tiaodeng', name: '挑灯看剑', type: 'skill', weaponType: 'jian', cost: 32, cd: 4, levelNeed: 40, desc: '单体220%伤害，50%暴击', effect: { dmg: 2.2, critChance: 0.5 } }
         ],
         dao: [
-            { id: 'dao_xuanfeng', name: '旋风裂', type: 'skill', cost: 15, cd: 3, levelNeed: 5, desc: '扇形范围120%伤害', effect: { fanDmg: 1.2 } },
-            { id: 'dao_duanshan', name: '断山斩', type: 'skill', cost: 25, cd: 3, levelNeed: 15, desc: '单体200%伤害，破甲', effect: { dmg: 2.0, breakArmor: 0.3 } },
-            { id: 'dao_jinfeng', name: '金凤刀法', type: 'skill', cost: 30, cd: 3, levelNeed: 30, desc: '扇形3道刀气，每道90%', effect: { fanDmg: 0.9, waves: 3 } }
+            { id: 'dao_xuanfeng', name: '旋风裂', type: 'skill', weaponType: 'dao', cost: 15, cd: 3, levelNeed: 5, desc: '扇形范围120%伤害', effect: { fanDmg: 1.2 } },
+            { id: 'dao_liedi', name: '裂地斩', type: 'skill', weaponType: 'dao', cost: 18, cd: 3, levelNeed: 10, desc: '单体160%伤害，降低敌方防御20%', effect: { dmg: 1.6, debuffDef: 0.2 } },
+            { id: 'dao_duanshan', name: '断山斩', type: 'skill', weaponType: 'dao', cost: 25, cd: 3, levelNeed: 20, desc: '单体200%伤害，破甲', effect: { dmg: 2.0, breakArmor: 0.3 } },
+            { id: 'dao_kuangfeng', name: '狂风斩', type: 'skill', weaponType: 'dao', cost: 28, cd: 4, levelNeed: 25, desc: '3段攻击每段70%', effect: { hits: 3, dmg: 0.7 } },
+            { id: 'dao_yanhuo', name: '焰火魔斩', type: 'skill', weaponType: 'dao', cost: 35, cd: 4, levelNeed: 40, desc: '扇形范围180%伤害，附带燃烧3回合', effect: { fanDmg: 1.8, burn: { dmg: 0.05, turns: 3 } } }
         ],
         qiang: [
-            { id: 'qiang_chuanyun', name: '穿云破', type: 'skill', cost: 15, cd: 3, levelNeed: 5, desc: '直线穿透180%伤害', effect: { pierceDmg: 1.8 } },
-            { id: 'qiang_lianhuan', name: '连环刺', type: 'skill', cost: 20, cd: 3, levelNeed: 15, desc: '2次攻击，每次100%', effect: { hits: 2, dmg: 1.0 } },
-            { id: 'qiang_liaoyuan', name: '燎原百破', type: 'skill', cost: 35, cd: 4, levelNeed: 30, desc: '十字5次突刺', effect: { crossHits: 5, dmg: 0.5 } }
+            { id: 'qiang_chuanyun', name: '穿云破', type: 'skill', weaponType: 'qiang', cost: 15, cd: 3, levelNeed: 5, desc: '直线穿透180%伤害', effect: { pierceDmg: 1.8 } },
+            { id: 'qiang_tuci', name: '突刺', type: 'skill', weaponType: 'qiang', cost: 18, cd: 3, levelNeed: 10, desc: '单体140%伤害，概率击退', effect: { dmg: 1.4, knockbackChance: 0.3 } },
+            { id: 'qiang_lianhuan', name: '连环刺', type: 'skill', weaponType: 'qiang', cost: 22, cd: 3, levelNeed: 20, desc: '2次攻击每次100%', effect: { hits: 2, dmg: 1.0 } },
+            { id: 'qiang_huima', name: '回马枪', type: 'skill', weaponType: 'qiang', cost: 28, cd: 4, levelNeed: 25, desc: '单体200%伤害，闪避后反击150%', effect: { dmg: 2.0, dodgeCounter: 1.5 } },
+            { id: 'qiang_liaoyuan', name: '燎原百破', type: 'skill', weaponType: 'qiang', cost: 38, cd: 4, levelNeed: 40, desc: '十字5次突刺每次50%', effect: { crossHits: 5, dmg: 0.5 } }
         ],
         gong: [
-            { id: 'gong_zhuihun', name: '追魂刺', type: 'skill', cost: 15, cd: 3, levelNeed: 5, desc: '后排锁定160%伤害', effect: { backDmg: 1.6 } },
-            { id: 'gong_lianzhu', name: '连珠箭', type: 'skill', cost: 20, cd: 2, levelNeed: 15, desc: '3箭，每箭70%', effect: { arrows: 3, dmg: 0.7 } },
-            { id: 'gong_zhuihun2', name: '追魂箭', type: 'skill', cost: 25, cd: 3, levelNeed: 30, desc: '后排150%，50%禁疗', effect: { backDmg: 1.5, antiHeal: 0.5 } }
+            { id: 'gong_zhuihun', name: '追魂刺', type: 'skill', weaponType: 'gong', cost: 15, cd: 3, levelNeed: 5, desc: '后排锁定160%伤害', effect: { backDmg: 1.6 } },
+            { id: 'gong_chuanyun', name: '穿云箭', type: 'skill', weaponType: 'gong', cost: 18, cd: 3, levelNeed: 10, desc: '单体180%伤害，无视20%防御', effect: { dmg: 1.8, pierce: 0.2 } },
+            { id: 'gong_lianzhu', name: '连珠箭', type: 'skill', weaponType: 'gong', cost: 22, cd: 2, levelNeed: 20, desc: '3箭每箭70%', effect: { arrows: 3, dmg: 0.7 } },
+            { id: 'gong_baolie', name: '爆裂箭', type: 'skill', weaponType: 'gong', cost: 28, cd: 4, levelNeed: 25, desc: '范围爆炸120%伤害', effect: { aoeDmg: 1.2 } },
+            { id: 'gong_shigu', name: '蚀骨箭', type: 'skill', weaponType: 'gong', cost: 32, cd: 4, levelNeed: 40, desc: '后排200%伤害，禁疗3回合', effect: { backDmg: 2.0, antiHeal: 3 } }
         ]
     },
 
-    // ===== 绝学奥义（通过秘籍/羁绊学习） =====
+    // ===== 主角奥义库（按兵器类型分级） =====
+    // 15/30/50级奥义，需在武学界面手动解锁
     heroUlts: {
-        quan: { id: 'quan_qianlong', name: '潜龙十八掌', type: 'ult', desc: '6段递增伤害，无视20%防御', effect: { hits: 6, dmg: 0.5, incr: 0.08, pierce: 0.2 } },
-        jian: { id: 'jian_dubu', name: '独步九剑', type: 'ult', desc: '随机攻击3目标，无视30%防御', effect: { targets: 3, dmg: 1.2, pierce: 0.3 } },
-        dao: { id: 'dao_mieju', name: '灭绝十字斩', type: 'ult', desc: '十字范围+流血3回合', effect: { crossDmg: 2.5, bleed: { dmg: 0.05, turns: 3 } } },
-        qiang: { id: 'qiang_bawang', name: '霸王断魂枪', type: 'ult', desc: '直线250%伤害+击退', effect: { pierceDmg: 2.5, knockback: true } },
-        gong: { id: 'gong_sheri', name: '射日弓诀', type: 'ult', desc: '锁定最低血量，350%必暴', effect: { snipe: true, dmg: 3.5, crit: 1 } }
+        quan: [
+            { id: 'quan_xianglong', name: '降龙伏虎', type: 'ult', weaponType: 'quan', levelNeed: 15, desc: '3段递增伤害(80%/100%/120%)，无视15%防御', effect: { hits: 3, dmg: [0.8, 1.0, 1.2], pierce: 0.15 } },
+            { id: 'quan_jingang', name: '金刚怒目', type: 'ult', weaponType: 'quan', levelNeed: 30, desc: '自身攻击+50%，防御+30%，持续3回合', effect: { selfBuff: { atk: 0.5, def: 0.3, turns: 3 } } },
+            { id: 'quan_guiyuan', name: '归元神掌', type: 'ult', weaponType: 'quan', levelNeed: 50, desc: '单体400%伤害，恢复造成伤害30%的HP', effect: { dmg: 4.0, lifesteal: 0.3 } }
+        ],
+        jian: [
+            { id: 'jian_jinghong', name: '惊鸿一剑', type: 'ult', weaponType: 'jian', levelNeed: 15, desc: '单体250%伤害，无视30%防御', effect: { dmg: 2.5, pierce: 0.3 } },
+            { id: 'jian_jiulong', name: '九龙连闪', type: 'ult', weaponType: 'jian', levelNeed: 30, desc: '9段攻击每段40%伤害', effect: { hits: 9, dmg: 0.4 } },
+            { id: 'jian_wanjian', name: '万剑归宗', type: 'ult', weaponType: 'jian', levelNeed: 50, desc: '全体150%伤害', effect: { allDmg: 1.5 } }
+        ],
+        dao: [
+            { id: 'dao_xuezhan', name: '血战八方', type: 'ult', weaponType: 'dao', levelNeed: 15, desc: '全体150%伤害，吸血15%', effect: { allDmg: 1.5, drain: 0.15 } },
+            { id: 'dao_xiuluo', name: '修罗斩', type: 'ult', weaponType: 'dao', levelNeed: 30, desc: '牺牲20%HP，单体350%伤害', effect: { hpCost: 0.2, dmg: 3.5 } },
+            { id: 'dao_xianglong', name: '翔天龙闪', type: 'ult', weaponType: 'dao', levelNeed: 50, desc: '单体300%伤害，无视50%防御', effect: { dmg: 3.0, pierce: 0.5 } }
+        ],
+        qiang: [
+            { id: 'qiang_longdan', name: '龙胆破', type: 'ult', weaponType: 'qiang', levelNeed: 15, desc: '直线250%伤害，自身攻击+20%', effect: { pierceDmg: 2.5, selfBuff: { atk: 0.2, turns: 2 } } },
+            { id: 'qiang_pojun', name: '破军', type: 'ult', weaponType: 'qiang', levelNeed: 30, desc: '全体180%伤害，降低敌方防御20%', effect: { allDmg: 1.8, debuffDef: 0.2 } },
+            { id: 'qiang_bawang', name: '霸王断魂枪', type: 'ult', weaponType: 'qiang', levelNeed: 50, desc: '单体400%伤害，斩杀线25%', effect: { dmg: 4.0, execute: 0.25 } }
+        ],
+        gong: [
+            { id: 'gong_liuxing', name: '流星赶月', type: 'ult', weaponType: 'gong', levelNeed: 15, desc: '随机5箭每箭100%伤害', effect: { randomArrows: 5, dmg: 1.0 } },
+            { id: 'gong_jiutian', name: '九天揽月', type: 'ult', weaponType: 'gong', levelNeed: 30, desc: '全体120%伤害，降低敌方速度20%', effect: { allDmg: 1.2, debuffSpeed: 0.2 } },
+            { id: 'gong_sheri', name: '射日弓诀', type: 'ult', weaponType: 'gong', levelNeed: 50, desc: '锁定最低血量350%必暴', effect: { snipe: true, dmg: 3.5, crit: 1 } }
+        ]
     },
 
     // ===== 武将库 =====
@@ -545,6 +577,16 @@ var GAME_DATA = {
         jiebanzheng: { name: '羁绊之证', icon: '💝', type: 'consumable', effect: { bondExp: 50 }, desc: '提升武将羁绊经验50点' }
     },
 
+    // ===== 道具（宝箱、秘籍等）=====
+    items: {
+        baoxiang_wuxue: { name: '武学宝箱', icon: '🎁', type: 'item', desc: '打开后可获得武学秘籍' },
+        miji_quan: { name: '拳法精要', icon: '📕', type: 'item', desc: '研读后可领悟拳法基础技能「崩山捶」', skillId: 'quan_bengshan' },
+        miji_jian: { name: '剑法精要', icon: '📕', type: 'item', desc: '研读后可领悟剑法基础技能「白刃斩」', skillId: 'jian_bairen' },
+        miji_dao: { name: '刀法精要', icon: '📕', type: 'item', desc: '研读后可领悟刀法基础技能「旋风裂」', skillId: 'dao_xuanfeng' },
+        miji_qiang: { name: '枪法精要', icon: '📕', type: 'item', desc: '研读后可领悟枪法基础技能「穿云破」', skillId: 'qiang_chuanyun' },
+        miji_gong: { name: '弓法精要', icon: '📕', type: 'item', desc: '研读后可领悟弓法基础技能「追魂刺」', skillId: 'gong_zhuihun' }
+    },
+
     // ===== 任务 =====
     // location: 任务所在地点名，npc: NPC标识，npcName: NPC显示名
     quests: [
@@ -570,6 +612,13 @@ var GAME_DATA = {
         }
         return table;
     })()
+};
+
+// ===== 兑换码配置 =====
+GAME_DATA.redeemCodes = {
+    'WUSHEN666': { rewards: { items: ['baoxiang_wuxue:1'] }, desc: '武学宝箱×1' },
+    'WUSHEN888': { rewards: { silver: 500, items: ['jinchuang:5'] }, desc: '银两×500、金疮药×5' },
+    'WUSHEN2025': { rewards: { items: ['miji_quan:1', 'miji_jian:1'] }, desc: '拳法精要×1、剑法精要×1' }
 };
 
 // ===== 工具函数 =====

@@ -48,6 +48,10 @@ var Game = {
                 if (!this.state.currentChapter) {
                     this.state.currentChapter = this.state.chapter;
                 }
+                // 兼容旧存档：补充 redeemedCodes
+                if (!this.state.redeemedCodes) {
+                    this.state.redeemedCodes = [];
+                }
             } catch(e) {
                 this.state = null;
             }
@@ -732,6 +736,110 @@ var Game = {
             btn.textContent = this.soundOn ? '开' : '关';
             btn.classList.toggle('active', this.soundOn);
         }
+    },
+
+    // ===== 兑换码 =====
+    redeemCode: function() {
+        var input = document.getElementById('redeem-code-input');
+        var code = input ? input.value.trim().toUpperCase() : '';
+        if (!code) {
+            UI.showModal('提示', '请输入兑换码！');
+            return;
+        }
+        var config = GAME_DATA.redeemCodes[code];
+        if (!config) {
+            UI.showModal('提示', '兑换码无效或已过期！');
+            return;
+        }
+        if (this.state.redeemedCodes.indexOf(code) !== -1) {
+            UI.showModal('提示', '该兑换码已经使用过了！');
+            return;
+        }
+        var r = config.rewards;
+        var msg = '兑换成功！<br><br>获得：<br>';
+        if (r.silver) {
+            this.addSilver(r.silver);
+            msg += '💰 银两 +' + r.silver + '<br>';
+        }
+        if (r.items) {
+            for (var i = 0; i < r.items.length; i++) {
+                var parts = r.items[i].split(':');
+                var itemId = parts[0];
+                var count = parseInt(parts[1], 10) || 1;
+                this.addItem(itemId, count);
+                var itemName = '';
+                if (GAME_DATA.materials[itemId]) itemName = GAME_DATA.materials[itemId].name;
+                else if (GAME_DATA.consumables[itemId]) itemName = GAME_DATA.consumables[itemId].name;
+                else if (GAME_DATA.items && GAME_DATA.items[itemId]) itemName = GAME_DATA.items[itemId].name;
+                msg += '📦 ' + (itemName || itemId) + ' ×' + count + '<br>';
+            }
+        }
+        this.state.redeemedCodes.push(code);
+        if (input) input.value = '';
+        Game.saveGame();
+        UI.showModal('兑换成功', msg);
+    },
+
+    // ===== 打开宝箱 =====
+    openBox: function(boxId) {
+        if (!this.consumeItem(boxId, 1)) {
+            UI.showModal('提示', '宝箱不足！');
+            return;
+        }
+        var rewards = [];
+        if (boxId === 'baoxiang_wuxue') {
+            var mijiList = ['miji_quan', 'miji_jian', 'miji_dao', 'miji_qiang', 'miji_gong'];
+            var count = rand(1, 2);
+            for (var i = 0; i < count; i++) {
+                var idx = rand(0, mijiList.length - 1);
+                rewards.push(mijiList[idx]);
+            }
+        }
+        var msg = '打开宝箱，获得：<br><br>';
+        for (var j = 0; j < rewards.length; j++) {
+            this.addItem(rewards[j], 1);
+            var itemName = (GAME_DATA.items && GAME_DATA.items[rewards[j]]) ? GAME_DATA.items[rewards[j]].name : rewards[j];
+            msg += '📕 ' + itemName + '<br>';
+        }
+        Game.saveGame();
+        UI.showModal('宝箱开启', msg);
+        if (Game.currentScreen === 'bag') UI.renderBag();
+    },
+
+    // ===== 使用秘籍 =====
+    useMiji: function(mijiId) {
+        var miji = GAME_DATA.items[mijiId];
+        if (!miji || !miji.skillId) return;
+        var hero = this.state.hero;
+        for (var i = 0; i < hero.knownSkills.length; i++) {
+            if (hero.knownSkills[i].id === miji.skillId) {
+                UI.showModal('提示', '你已经学会「' + hero.knownSkills[i].name + '」了！');
+                return;
+            }
+        }
+        var skillData = null;
+        for (var wt in GAME_DATA.heroSkills) {
+            var list = GAME_DATA.heroSkills[wt];
+            for (var j = 0; j < list.length; j++) {
+                if (list[j].id === miji.skillId) {
+                    skillData = list[j];
+                    break;
+                }
+            }
+            if (skillData) break;
+        }
+        if (!skillData) {
+            UI.showModal('错误', '技能数据不存在！');
+            return;
+        }
+        if (!this.consumeItem(mijiId, 1)) {
+            UI.showModal('提示', '秘籍不足！');
+            return;
+        }
+        hero.knownSkills.push(copyObj(skillData));
+        Game.saveGame();
+        UI.showModal('领悟成功', '你研读了「' + miji.name + '」，领悟了技能「' + skillData.name + '」！');
+        if (Game.currentScreen === 'bag') UI.renderBag();
     }
 };
 

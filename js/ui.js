@@ -236,6 +236,9 @@ var UI = {
             } else if (GAME_DATA.consumables[id]) {
                 item = GAME_DATA.consumables[id];
                 category = 'consumable';
+            } else if (GAME_DATA.items && GAME_DATA.items[id]) {
+                item = GAME_DATA.items[id];
+                category = 'item';
             } else if (GAME_DATA.baseWeapons[id]) {
                 item = GAME_DATA.baseWeapons[id];
                 category = 'weapon';
@@ -319,7 +322,20 @@ var UI = {
         if (!item) return;
 
         var count = Game.state.hero.inventory[id] || 1;
-        this.showModal(item.name, desc + '<br><br>持有数量：' + count);
+        var buttons = '';
+        if (category === 'item') {
+            if (id.indexOf('baoxiang') === 0) {
+                buttons = '<button class="btn-confirm" onclick="Game.openBox('' + id + ''); UI.closeModal();">打开</button>';
+            } else if (id.indexOf('miji') === 0) {
+                buttons = '<button class="btn-confirm" onclick="Game.useMiji('' + id + ''); UI.closeModal();">研读</button>';
+            }
+        }
+
+        if (buttons) {
+            this.showModal(item.name, desc + '<br><br>持有数量：' + count, buttons);
+        } else {
+            this.showModal(item.name, desc + '<br><br>持有数量：' + count);
+        }
     },
 
     // ===== 铁匠铺 =====
@@ -777,13 +793,20 @@ var UI = {
     // 主角技能选择弹窗
     showSkillSelectModal: function(slotIndex) {
         var hero = Game.state.hero;
-        if (!hero.knownSkills || hero.knownSkills.length === 0) {
-            UI.showModal('提示', '暂无可用技能');
+        var currentWType = hero.equip && hero.equip.weapon && hero.equip.weapon.type ? hero.equip.weapon.type : 'quan';
+        var availableSkills = [];
+        for (var i = 0; i < hero.knownSkills.length; i++) {
+            if (hero.knownSkills[i].weaponType === currentWType) {
+                availableSkills.push(hero.knownSkills[i]);
+            }
+        }
+        if (availableSkills.length === 0) {
+            UI.showModal('提示', '暂无可用' + (GAME_DATA.weaponTypes[currentWType] ? GAME_DATA.weaponTypes[currentWType].name : '') + '技能<br><small>请在武学界面解锁技能</small>');
             return;
         }
         var content = '<div style="max-height:300px;overflow-y:auto;">';
-        for (var i = 0; i < hero.knownSkills.length; i++) {
-            var sk = hero.knownSkills[i];
+        for (var i = 0; i < availableSkills.length; i++) {
+            var sk = availableSkills[i];
             var equipped = false;
             for (var j = 0; j < hero.equippedSkills.length; j++) {
                 if (hero.equippedSkills[j] === sk.id) { equipped = true; break; }
@@ -801,13 +824,20 @@ var UI = {
     // 主角奥义选择弹窗
     showUltSelectModal: function() {
         var hero = Game.state.hero;
-        if (!hero.knownUlts || hero.knownUlts.length === 0) {
-            UI.showModal('提示', '暂无可用奥义<br><small>提升武将羁绊至2级可解锁其奥义</small>');
+        var currentWType = hero.equip && hero.equip.weapon && hero.equip.weapon.type ? hero.equip.weapon.type : 'quan';
+        var availableUlts = [];
+        for (var i = 0; i < hero.knownUlts.length; i++) {
+            if (hero.knownUlts[i].weaponType === currentWType) {
+                availableUlts.push(hero.knownUlts[i]);
+            }
+        }
+        if (availableUlts.length === 0) {
+            UI.showModal('提示', '暂无可用' + (GAME_DATA.weaponTypes[currentWType] ? GAME_DATA.weaponTypes[currentWType].name : '') + '奥义<br><small>请在武学界面解锁奥义</small>');
             return;
         }
         var content = '<div style="max-height:300px;overflow-y:auto;">';
-        for (var i = 0; i < hero.knownUlts.length; i++) {
-            var ul = hero.knownUlts[i];
+        for (var i = 0; i < availableUlts.length; i++) {
+            var ul = availableUlts[i];
             var equipped = hero.equippedUlt === ul.id;
             content += '<div style="padding:8px;border-bottom:1px solid #333;' + (equipped ? 'opacity:0.5;' : 'cursor:pointer;') + '" ' +
                 (equipped ? '' : 'onclick="UI.closeModal();Game.equipUlt(\'' + ul.id + '\');UI.renderConfigDetail(\'hero\');"') + '>' +
@@ -829,5 +859,175 @@ var UI = {
             }
         }
         Game.equipSkill(0, skillId);
-    }
+    },
+    // ===== 武学界面 =====
+    martialTab: 'learned',
+    martialWeapon: 'quan',
+
+    showMartialTab: function(tab) {
+        this.martialTab = tab;
+        var tabs = document.querySelectorAll('.martial-tab');
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].classList.remove('active');
+        }
+        if (event && event.target) event.target.classList.add('active');
+        this.renderMartial();
+    },
+
+    selectMartialWeapon: function(wt) {
+        this.martialWeapon = wt;
+        var btns = document.querySelectorAll('.mw-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.remove('active');
+        }
+        var activeBtn = document.querySelector('.mw-btn[data-wt="' + wt + '"]');
+        if (activeBtn) activeBtn.classList.add('active');
+        this.renderMartial();
+    },
+
+    renderMartial: function() {
+        try {
+            if (!Game.state) return;
+            var hero = Game.state.hero;
+            if (!hero) return;
+            var container = document.getElementById('martial-content');
+            if (!container) return;
+            if (!hero.knownSkills) hero.knownSkills = [];
+            if (!hero.knownUlts) hero.knownUlts = [];
+
+            var wt = this.martialWeapon;
+            var wtInfo = GAME_DATA.weaponTypes[wt];
+            var skillList = GAME_DATA.heroSkills[wt] || [];
+            var ultList = GAME_DATA.heroUlts[wt] || [];
+
+            if (this.martialTab === 'learned') {
+                // === 已习得武学：按当前选中的兵器类型筛选显示 ===
+                var knownSkills = [];
+                var knownUlts = [];
+                for (var i = 0; i < hero.knownSkills.length; i++) {
+                    if (hero.knownSkills[i].weaponType === wt) knownSkills.push(hero.knownSkills[i]);
+                }
+                for (var j = 0; j < hero.knownUlts.length; j++) {
+                    if (hero.knownUlts[j].weaponType === wt) knownUlts.push(hero.knownUlts[j]);
+                }
+
+                var html = '<div class="martial-title">' + (wtInfo ? wtInfo.icon : '') + ' ' + (wtInfo ? wtInfo.name : wt) + ' — 已习得</div>';
+                html += '<div class="martial-columns">';
+
+                // 技能列
+                html += '<div class="martial-col"><h4>🔥 技能</h4>';
+                if (knownSkills.length === 0) {
+                    html += '<div class="martial-empty">暂无已习得的' + (wtInfo ? wtInfo.name : '') + '技能</div>';
+                } else {
+                    for (var s = 0; s < knownSkills.length; s++) {
+                        var ksk = knownSkills[s];
+                        html += '<div class="martial-item learned" onclick="UI.showMartialDetail(\'' + ksk.id + '\', \'skill\')">' +
+                            '<div class="mi-name">' + ksk.name + '</div>' +
+                            '<div class="mi-meta">' + ksk.cost + 'MP · CD' + ksk.cd + '</div>' +
+                            '<div class="mi-desc">' + ksk.desc + '</div>' +
+                        '</div>';
+                    }
+                }
+                html += '</div>';
+
+                // 奥义列
+                html += '<div class="martial-col"><h4>⚡ 奥义</h4>';
+                if (knownUlts.length === 0) {
+                    html += '<div class="martial-empty">暂无已习得的' + (wtInfo ? wtInfo.name : '') + '奥义</div>';
+                } else {
+                    for (var u = 0; u < knownUlts.length; u++) {
+                        var kul = knownUlts[u];
+                        html += '<div class="martial-item ult learned" onclick="UI.showMartialDetail(\'' + kul.id + '\', \'ult\')">' +
+                            '<div class="mi-name">' + kul.name + '</div>' +
+                            '<div class="mi-desc">' + kul.desc + '</div>' +
+                        '</div>';
+                    }
+                }
+                html += '</div>';
+                html += '</div>';
+                container.innerHTML = html;
+
+            } else {
+                // === 待习得武学：按当前选中的兵器类型显示技能链 ===
+                var html = '<div class="martial-title">' + (wtInfo ? wtInfo.icon : '') + ' ' + (wtInfo ? wtInfo.name : wt) + ' — 技能链</div>';
+                html += '<div class="martial-columns">';
+
+                // 技能链
+                html += '<div class="martial-col"><h4>🔥 技能</h4>';
+                for (var si = 0; si < skillList.length; si++) {
+                    var skT = skillList[si];
+                    var hasLearned = false;
+                    for (var hj = 0; hj < hero.knownSkills.length; hj++) {
+                        if (hero.knownSkills[hj].id === skT.id) { hasLearned = true; break; }
+                    }
+                    var canUnlock = hero.level >= skT.levelNeed && !hasLearned;
+                    html += '<div class="martial-item ' + (hasLearned ? 'learned' : (canUnlock ? 'unlockable' : 'locked')) + '">' +
+                        '<div class="mi-name">' + skT.name + ' <span class="mi-level">Lv.' + skT.levelNeed + '</span></div>' +
+                        '<div class="mi-meta">' + skT.cost + 'MP · CD' + skT.cd + '</div>' +
+                        '<div class="mi-desc">' + skT.desc + '</div>';
+                    if (canUnlock) {
+                        html += '<button class="btn-unlock" onclick="Game.unlockSkill(\'' + skT.id + '\'); UI.renderMartial();">🔓 解锁</button>';
+                    } else if (hasLearned) {
+                        html += '<div class="mi-status">✓ 已习得</div>';
+                    } else {
+                        html += '<div class="mi-status">🔒 需 Lv.' + skT.levelNeed + '</div>';
+                    }
+                    html += '</div>';
+                }
+                html += '</div>';
+
+                // 奥义链
+                html += '<div class="martial-col"><h4>⚡ 奥义</h4>';
+                for (var uli = 0; uli < ultList.length; uli++) {
+                    var ulT = ultList[uli];
+                    var hasLearnedU = false;
+                    for (var hj2 = 0; hj2 < hero.knownUlts.length; hj2++) {
+                        if (hero.knownUlts[hj2].id === ulT.id) { hasLearnedU = true; break; }
+                    }
+                    var canUnlockU = hero.level >= ulT.levelNeed && !hasLearnedU;
+                    html += '<div class="martial-item ult ' + (hasLearnedU ? 'learned' : (canUnlockU ? 'unlockable' : 'locked')) + '">' +
+                        '<div class="mi-name">' + ulT.name + ' <span class="mi-level">Lv.' + ulT.levelNeed + '</span></div>' +
+                        '<div class="mi-desc">' + ulT.desc + '</div>';
+                    if (canUnlockU) {
+                        html += '<button class="btn-unlock" onclick="Game.unlockUlt(\'' + ulT.id + '\'); UI.renderMartial();">🔓 解锁</button>';
+                    } else if (hasLearnedU) {
+                        html += '<div class="mi-status">✓ 已习得</div>';
+                    } else {
+                        html += '<div class="mi-status">🔒 需 Lv.' + ulT.levelNeed + '</div>';
+                    }
+                    html += '</div>';
+                }
+                html += '</div>';
+
+                html += '</div>';
+                container.innerHTML = html;
+            }
+        } catch(e) {
+            console.error('renderMartial error:', e);
+            var c2 = document.getElementById('martial-content');
+            if (c2) c2.innerHTML = '<div style="text-align:center;color:#c2392b;padding:40px;">武学界面加载出错，请刷新重试</div>';
+        }
+    },
+
+    showMartialDetail: function(id, type) {
+        var hero = Game.state.hero;
+        var item = null;
+        if (type === 'skill') {
+            for (var i = 0; i < hero.knownSkills.length; i++) {
+                if (hero.knownSkills[i].id === id) { item = hero.knownSkills[i]; break; }
+            }
+        } else {
+            for (var j = 0; j < hero.knownUlts.length; j++) {
+                if (hero.knownUlts[j].id === id) { item = hero.knownUlts[j]; break; }
+            }
+        }
+        if (!item) return;
+        var title = type === 'skill' ? '技能详情' : '奥义详情';
+        var content = '<b>' + item.name + '</b><br><br>' + item.desc;
+        if (type === 'skill') {
+            content += '<br><br>消耗: ' + item.cost + 'MP<br>冷却: ' + item.cd + '回合';
+        }
+        UI.showModal(title, content);
+    },
+
 };
