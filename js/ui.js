@@ -712,8 +712,8 @@ var UI = {
             html += '</div>';
         } else {
             html += '<div class="hero-skills-readonly">' +
-                '<div class="skill-item"><b>\u6280\u80fd1\uff1a</b>' + unit.skills.skill1.name + '<br><small>' + unit.skills.skill1.desc + '</small></div>' +
-                '<div class="skill-item"><b>\u6280\u80fd2\uff1a</b>' + unit.skills.skill2.name + '<br><small>' + unit.skills.skill2.desc + '</small></div>' +
+                '<div class="skill-item"><b>\u6280\u80fd1\uff1a</b>' + unit.skills.s1.name + '<br><small>' + unit.skills.s1.desc + '</small></div>' +
+                '<div class="skill-item"><b>\u6280\u80fd2\uff1a</b>' + unit.skills.s2.name + '<br><small>' + unit.skills.s2.desc + '</small></div>' +
             '</div>';
             if (unit.bondLevel >= 2) {
                 html += '<div class="ult-readonly">' +
@@ -781,7 +781,7 @@ var UI = {
                 if (hero.equippedSkills[j] === sk.id) { equipped = true; break; }
             }
             content += '<div style="padding:8px;border-bottom:1px solid #333;' + (equipped ? 'opacity:0.5;' : 'cursor:pointer;') + '" ' +
-                (equipped ? '' : 'onclick="UI.closeModal();Game.equipSkill(' + slotIndex + ', \'' + sk.id + '\');UI.renderUnitConfig();"') + '>' +
+                (equipped ? '' : 'onclick="UI.closeModal();Game.equipSkill(' + slotIndex + ', \'' + sk.id + '\');UI.renderConfigDetail(\'hero\');"') + '>' +
                 '<b>' + sk.name + '</b> ' + (equipped ? '<span style="color:#999">[已装备]</span>' : '') + '<br>' +
                 '<small style="color:#999">' + sk.desc + ' · ' + sk.cost + 'MP · CD' + sk.cd + '</small>' +
             '</div>';
@@ -802,7 +802,7 @@ var UI = {
             var ul = hero.knownUlts[i];
             var equipped = hero.equippedUlt === ul.id;
             content += '<div style="padding:8px;border-bottom:1px solid #333;' + (equipped ? 'opacity:0.5;' : 'cursor:pointer;') + '" ' +
-                (equipped ? '' : 'onclick="UI.closeModal();Game.equipUlt(\'' + ul.id + '\');UI.renderUnitConfig();"') + '>' +
+                (equipped ? '' : 'onclick="UI.closeModal();Game.equipUlt(\'' + ul.id + '\');UI.renderConfigDetail(\'hero\');"') + '>' +
                 '<b>' + ul.name + '</b> ' + (equipped ? '<span style="color:#999">[已装备]</span>' : '') + '<br>' +
                 '<small style="color:#999">' + ul.desc + '</small>' +
             '</div>';
