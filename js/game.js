@@ -786,15 +786,6 @@ var Game = {
             UI.showModal('提示', '宝箱不足！');
             return;
         }
-        var rewards = [];
-        if (boxId === 'baoxiang_wuxue') {
-            var mijiList = ['miji_quan', 'miji_jian', 'miji_dao', 'miji_qiang', 'miji_gong'];
-            var count = rand(1, 2);
-            for (var i = 0; i < count; i++) {
-                var idx = rand(0, mijiList.length - 1);
-                rewards.push(mijiList[idx]);
-            }
-        }
         var msg = '打开宝箱，获得：<br><br>';
         for (var j = 0; j < rewards.length; j++) {
             this.addItem(rewards[j], 1);
@@ -806,41 +797,6 @@ var Game = {
         if (Game.currentScreen === 'bag') UI.renderBag();
     },
 
-    // ===== 使用秘籍 =====
-    useMiji: function(mijiId) {
-        var miji = GAME_DATA.items[mijiId];
-        if (!miji || !miji.skillId) return;
-        var hero = this.state.hero;
-        for (var i = 0; i < hero.knownSkills.length; i++) {
-            if (hero.knownSkills[i].id === miji.skillId) {
-                UI.showModal('提示', '你已经学会「' + hero.knownSkills[i].name + '」了！');
-                return;
-            }
-        }
-        var skillData = null;
-        for (var wt in GAME_DATA.heroSkills) {
-            var list = GAME_DATA.heroSkills[wt];
-            for (var j = 0; j < list.length; j++) {
-                if (list[j].id === miji.skillId) {
-                    skillData = list[j];
-                    break;
-                }
-            }
-            if (skillData) break;
-        }
-        if (!skillData) {
-            UI.showModal('错误', '技能数据不存在！');
-            return;
-        }
-        if (!this.consumeItem(mijiId, 1)) {
-            UI.showModal('提示', '秘籍不足！');
-            return;
-        }
-        hero.knownSkills.push(copyObj(skillData));
-        Game.saveGame();
-        UI.showModal('领悟成功', '你研读了「' + miji.name + '」，领悟了技能「' + skillData.name + '」！');
-        if (Game.currentScreen === 'bag') UI.renderBag();
-    }
 };
 
 // 深度拷贝辅助

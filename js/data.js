@@ -580,11 +580,6 @@ var GAME_DATA = {
     // ===== 道具（宝箱、秘籍等）=====
     items: {
         baoxiang_wuxue: { name: '武学宝箱', icon: '🎁', type: 'item', desc: '打开后可获得武学秘籍' },
-        miji_quan: { name: '拳法精要', icon: '📕', type: 'item', desc: '研读后可领悟拳法基础技能「崩山捶」', skillId: 'quan_bengshan' },
-        miji_jian: { name: '剑法精要', icon: '📕', type: 'item', desc: '研读后可领悟剑法基础技能「白刃斩」', skillId: 'jian_bairen' },
-        miji_dao: { name: '刀法精要', icon: '📕', type: 'item', desc: '研读后可领悟刀法基础技能「旋风裂」', skillId: 'dao_xuanfeng' },
-        miji_qiang: { name: '枪法精要', icon: '📕', type: 'item', desc: '研读后可领悟枪法基础技能「穿云破」', skillId: 'qiang_chuanyun' },
-        miji_gong: { name: '弓法精要', icon: '📕', type: 'item', desc: '研读后可领悟弓法基础技能「追魂刺」', skillId: 'gong_zhuihun' }
     },
 
     // ===== 任务 =====
@@ -618,10 +613,8 @@ var GAME_DATA = {
 GAME_DATA.redeemCodes = {
     'WUSHEN666': { rewards: { items: ['baoxiang_wuxue:1'] }, desc: '武学宝箱×1' },
     'WUSHEN888': { rewards: { silver: 500, items: ['jinchuang:5'] }, desc: '银两×500、金疮药×5' },
-    'WUSHEN2025': { rewards: { items: ['miji_quan:1', 'miji_jian:1'] }, desc: '拳法精要×1、剑法精要×1' }
 };
 
-// ===== 工具函数 =====
 
 function rand(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
