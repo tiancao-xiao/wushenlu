@@ -52,6 +52,25 @@ var Game = {
                 if (!this.state.redeemedCodes) {
                     this.state.redeemedCodes = [];
                 }
+                // 兼容旧存档：补充 knownSkills / knownUlts / equippedSkills / equippedUlt
+                var hero = this.state.hero;
+                if (hero) {
+                    if (!hero.knownSkills) hero.knownSkills = [];
+                    if (!hero.knownUlts) hero.knownUlts = [];
+                    if (!hero.equippedSkills) hero.equippedSkills = [null, null];
+                    if (hero.equippedUlt === undefined) hero.equippedUlt = null;
+                    var wType = hero.equip && hero.equip.weapon && hero.equip.weapon.type ? hero.equip.weapon.type : 'quan';
+                    for (var ks = 0; ks < hero.knownSkills.length; ks++) {
+                        if (!hero.knownSkills[ks].weaponType) {
+                            hero.knownSkills[ks].weaponType = wType;
+                        }
+                    }
+                    for (var ku = 0; ku < hero.knownUlts.length; ku++) {
+                        if (!hero.knownUlts[ku].weaponType) {
+                            hero.knownUlts[ku].weaponType = wType;
+                        }
+                    }
+                }
             } catch(e) {
                 this.state = null;
             }
@@ -80,6 +99,7 @@ var Game = {
         if (screenId === 'smith') UI.renderSmith();
         if (screenId === 'tasks') UI.renderTasks();
         if (screenId === 'config') UI.renderConfig();
+        if (screenId === 'martial') UI.renderMartial();
     },
     // ===== 角色创建 =====
     // 开局5级，20点自由分配
@@ -315,6 +335,74 @@ var Game = {
                 }
             }
         }
+    },
+
+    // 手动解锁主角技能
+    unlockSkill: function(skillId) {
+        var hero = this.state.hero;
+        var weaponType = hero.equip && hero.equip.weapon && hero.equip.weapon.type ? hero.equip.weapon.type : 'quan';
+        var skillList = GAME_DATA.heroSkills[weaponType];
+        if (!skillList) return false;
+
+        var targetSkill = null;
+        for (var i = 0; i < skillList.length; i++) {
+            if (skillList[i].id === skillId) {
+                targetSkill = skillList[i];
+                break;
+            }
+        }
+        if (!targetSkill) return false;
+        if (hero.level < targetSkill.levelNeed) {
+            UI.showModal('提示', '需要达到 Lv.' + targetSkill.levelNeed + ' 才能解锁「' + targetSkill.name + '」');
+            return false;
+        }
+
+        for (var j = 0; j < hero.knownSkills.length; j++) {
+            if (hero.knownSkills[j].id === skillId) {
+                UI.showModal('提示', '你已经学会「' + targetSkill.name + '」了！');
+                return false;
+            }
+        }
+
+        var newSkill = copyObj(targetSkill);
+        hero.knownSkills.push(newSkill);
+        Game.saveGame();
+        UI.showModal('领悟技能！', '你领悟了 <b>' + newSkill.name + '</b>！<br><br>' + newSkill.desc);
+        return true;
+    },
+
+    // 手动解锁主角奥义
+    unlockUlt: function(ultId) {
+        var hero = this.state.hero;
+        var weaponType = hero.equip && hero.equip.weapon && hero.equip.weapon.type ? hero.equip.weapon.type : 'quan';
+        var ultList = GAME_DATA.heroUlts[weaponType];
+        if (!ultList) return false;
+
+        var targetUlt = null;
+        for (var i = 0; i < ultList.length; i++) {
+            if (ultList[i].id === ultId) {
+                targetUlt = ultList[i];
+                break;
+            }
+        }
+        if (!targetUlt) return false;
+        if (hero.level < targetUlt.levelNeed) {
+            UI.showModal('提示', '需要达到 Lv.' + targetUlt.levelNeed + ' 才能解锁「' + targetUlt.name + '」');
+            return false;
+        }
+
+        for (var j = 0; j < hero.knownUlts.length; j++) {
+            if (hero.knownUlts[j].id === ultId) {
+                UI.showModal('提示', '你已经学会「' + targetUlt.name + '」了！');
+                return false;
+            }
+        }
+
+        var newUlt = copyObj(targetUlt);
+        hero.knownUlts.push(newUlt);
+        Game.saveGame();
+        UI.showModal('领悟奥义！', '你领悟了奥义 <b>' + newUlt.name + '</b>！<br><br>' + newUlt.desc);
+        return true;
     },
 
     // ===== 主角装备更换 =====
@@ -785,6 +873,15 @@ var Game = {
         if (!this.consumeItem(boxId, 1)) {
             UI.showModal('提示', '宝箱不足！');
             return;
+        }
+        var rewards = [];
+        if (boxId === 'baoxiang_wuxue') {
+            var mijiList = ['miji_quan', 'miji_jian', 'miji_dao', 'miji_qiang', 'miji_gong'];
+            var count = rand(1, 2);
+            for (var i = 0; i < count; i++) {
+                var idx = rand(0, mijiList.length - 1);
+                rewards.push(mijiList[idx]);
+            }
         }
         var msg = '打开宝箱，获得：<br><br>';
         for (var j = 0; j < rewards.length; j++) {
