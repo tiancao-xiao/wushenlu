@@ -511,6 +511,14 @@ var UI = {
         if (!list) return;
         var detail = document.getElementById('config-detail');
         if (detail) detail.style.display = 'none';
+        if (list) list.style.display = 'block';
+
+        var html = '';
+        if (!Game.state) return;
+        var list = document.getElementById('config-char-list');
+        if (!list) return;
+        var detail = document.getElementById('config-detail');
+        if (detail) detail.style.display = 'none';
 
         var html = '';
         for (var i = 0; i < Game.state.team.length; i++) {
