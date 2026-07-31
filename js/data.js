@@ -106,6 +106,43 @@ var GAME_DATA = {
         ]
     },
 
+    // ===== 秘籍技能（只能通过秘籍道具学习，不显示在技能链中）=====
+    secretSkills: {
+        quan: [
+            { id: 'quan_bajibeng', name: '八极崩劲', type: 'skill', weaponType: 'quan', cost: 20, cd: 3, desc: '单体180%伤害，40%概率破甲，20%概率击退', effect: { dmg: 1.8, pierceChance: 0.4, knockbackChance: 0.2 } }
+        ],
+        jian: [
+            { id: 'jian_xiaoxiang', name: '潇湘剑诀', type: 'skill', weaponType: 'jian', cost: 18, cd: 3, desc: '单体200%伤害，30%概率触发连击', effect: { dmg: 2.0, comboChance: 0.3 } }
+        ],
+        dao: [
+            { id: 'dao_juhe', name: '居合一闪', type: 'skill', weaponType: 'dao', cost: 22, cd: 3, desc: '单体250%伤害，首回合必中，15%概率即死', effect: { dmg: 2.5, firstHit: true, executeChance: 0.15 } }
+        ],
+        qiang: [
+            { id: 'qiang_longyin', name: '龙吟九霄', type: 'skill', weaponType: 'qiang', cost: 20, cd: 3, desc: '直线穿透220%伤害，30%概率恐惧', effect: { pierceDmg: 2.2, fearChance: 0.3 } }
+        ],
+        gong: [
+            { id: 'gong_jingyu', name: '惊羽连珠', type: 'skill', weaponType: 'gong', cost: 20, cd: 2, desc: '5箭连射每箭60%，最后一箭必暴', effect: { arrows: 5, dmg: 0.6, lastCrit: true } }
+        ]
+    },
+
+    secretUlts: {
+        quan: [
+            { id: 'quan_liudao', name: '六道轮回拳', type: 'ult', weaponType: 'quan', desc: '6段连击每段70%，最后一段眩晕', effect: { hits: 6, dmg: 0.7, finalStun: true } }
+        ],
+        jian: [
+            { id: 'jian_tianxing', name: '天星蝶影剑', type: 'ult', weaponType: 'jian', desc: '全体250%伤害，无视20%防御；3回合内闪避后自动反击150%', effect: { allDmg: 2.5, pierce: 0.2, dodgeCounter: 1.5, turns: 3 } }
+        ],
+        dao: [
+            { id: 'dao_xianshuang', name: '霰雪霜寒斩', type: 'ult', weaponType: 'dao', desc: '最前一排180%冰伤；受伤敌人无法进攻1回合；敌方全体减速30%持续3回合', effect: { frontDmg: 1.8, freeze: 1, debuffSpeed: 0.3, turns: 3 } }
+        ],
+        qiang: [
+            { id: 'qiang_pojunws', name: '破军无双', type: 'ult', weaponType: 'qiang', desc: '单体400%伤害，斩杀线20%；击杀后立即再动', effect: { dmg: 4.0, execute: 0.2, extraTurn: true } }
+        ],
+        gong: [
+            { id: 'gong_luori', name: '落日神射', type: 'ult', weaponType: 'gong', desc: '锁定攻击最高目标400%必暴，禁疗3回合', effect: { snipeAtk: true, dmg: 4.0, crit: 1, antiHeal: 3 } }
+        ]
+    },
+
     // ===== 武将库 =====
     // 所有武将招募时自带2个技能，奥义需羁绊2级解锁
     // 招募等级 = 获得难度（关平5级，吕布40级）
@@ -580,6 +617,17 @@ var GAME_DATA = {
     // ===== 道具（宝箱、秘籍等）=====
     items: {
         baoxiang_wuxue: { name: '武学宝箱', icon: '🎁', type: 'item', desc: '打开后可获得武学秘籍' },
+        baoxiang_miji: { name: '秘籍宝箱', icon: '🎁', type: 'item', desc: '打开后可获得珍稀武学秘籍' },
+        miji_bajibeng: { name: '八极崩劲·秘籍', icon: '📕', type: 'item', desc: '研读后可习得拳法秘籍技能「八极崩劲」', skillId: 'quan_bajibeng' },
+        miji_liudao: { name: '六道轮回拳·秘籍', icon: '📕', type: 'item', desc: '研读后可习得拳法秘籍奥义「六道轮回拳」', skillId: 'quan_liudao' },
+        miji_xiaoxiang: { name: '潇湘剑诀·秘籍', icon: '📕', type: 'item', desc: '研读后可习得剑法秘籍技能「潇湘剑诀」', skillId: 'jian_xiaoxiang' },
+        miji_tianxing: { name: '天星蝶影剑·秘籍', icon: '📕', type: 'item', desc: '研读后可习得剑法秘籍奥义「天星蝶影剑」', skillId: 'jian_tianxing' },
+        miji_juhe: { name: '居合一闪·秘籍', icon: '📕', type: 'item', desc: '研读后可习得刀法秘籍技能「居合一闪」', skillId: 'dao_juhe' },
+        miji_xianshuang: { name: '霰雪霜寒斩·秘籍', icon: '📕', type: 'item', desc: '研读后可习得刀法秘籍奥义「霰雪霜寒斩」', skillId: 'dao_xianshuang' },
+        miji_longyin: { name: '龙吟九霄·秘籍', icon: '📕', type: 'item', desc: '研读后可习得枪法秘籍技能「龙吟九霄」', skillId: 'qiang_longyin' },
+        miji_pojunws: { name: '破军无双·秘籍', icon: '📕', type: 'item', desc: '研读后可习得枪法秘籍奥义「破军无双」', skillId: 'qiang_pojunws' },
+        miji_jingyu: { name: '惊羽连珠·秘籍', icon: '📕', type: 'item', desc: '研读后可习得弓法秘籍技能「惊羽连珠」', skillId: 'gong_jingyu' },
+        miji_luori: { name: '落日神射·秘籍', icon: '📕', type: 'item', desc: '研读后可习得弓法秘籍奥义「落日神射」', skillId: 'gong_luori' }
     },
 
     // ===== 任务 =====
@@ -613,6 +661,7 @@ var GAME_DATA = {
 GAME_DATA.redeemCodes = {
     'WUSHEN666': { rewards: { items: ['baoxiang_wuxue:1'] }, desc: '武学宝箱×1' },
     'WUSHEN888': { rewards: { silver: 500, items: ['jinchuang:5'] }, desc: '银两×500、金疮药×5' },
+    'JIANGNIUYAO': { rewards: { items: ['baoxiang_miji:1'] }, desc: '秘籍宝箱×1' }
 };
 
 

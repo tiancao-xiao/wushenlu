@@ -322,7 +322,16 @@ var UI = {
         if (!item) return;
 
         var count = Game.state.hero.inventory[id] || 1;
-        this.showModal(item.name, desc + '<br><br>持有数量：' + count);
+        var buttons = '';
+        if (id.indexOf('miji_') === 0) {
+            buttons = '<button class="btn-confirm" onclick="Game.useMiji('' + id + ''); UI.closeModal();">研读</button>';
+        }
+
+        if (buttons) {
+            this.showModal(item.name, desc + '<br><br>持有数量：' + count, buttons);
+        } else {
+            this.showModal(item.name, desc + '<br><br>持有数量：' + count);
+        }
     },
 
     // ===== 铁匠铺 =====

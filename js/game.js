@@ -876,11 +876,17 @@ var Game = {
         }
         var rewards = [];
         if (boxId === 'baoxiang_wuxue') {
-            var mijiList = ['miji_quan', 'miji_jian', 'miji_dao', 'miji_qiang', 'miji_gong'];
+            var mijiList = ['miji_bajibeng', 'miji_liudao', 'miji_xiaoxiang', 'miji_tianxing', 'miji_juhe', 'miji_xianshuang', 'miji_longyin', 'miji_pojunws', 'miji_jingyu', 'miji_luori'];
             var count = rand(1, 2);
             for (var i = 0; i < count; i++) {
                 var idx = rand(0, mijiList.length - 1);
                 rewards.push(mijiList[idx]);
+            }
+        }
+        if (boxId === 'baoxiang_miji') {
+            var allMiji = ['miji_bajibeng', 'miji_liudao', 'miji_xiaoxiang', 'miji_tianxing', 'miji_juhe', 'miji_xianshuang', 'miji_longyin', 'miji_pojunws', 'miji_jingyu', 'miji_luori'];
+            for (var mi = 0; mi < allMiji.length; mi++) {
+                rewards.push(allMiji[mi]);
             }
         }
         var msg = '打开宝箱，获得：<br><br>';
@@ -894,6 +900,83 @@ var Game = {
         if (Game.currentScreen === 'bag') UI.renderBag();
     },
 
+    // ===== 使用秘籍 =====
+    useMiji: function(mijiId) {
+        var miji = GAME_DATA.items[mijiId];
+        if (!miji || !miji.skillId) return;
+        var hero = this.state.hero;
+        // 查找技能数据
+        var skillData = null;
+        var isUlt = false;
+        // 在 secretSkills 中查找
+        for (var wt in GAME_DATA.secretSkills) {
+            var list = GAME_DATA.secretSkills[wt];
+            for (var i = 0; i < list.length; i++) {
+                if (list[i].id === miji.skillId) {
+                    skillData = list[i];
+                    break;
+                }
+            }
+            if (skillData) break;
+        }
+        // 在 secretUlts 中查找
+        if (!skillData) {
+            for (var wt2 in GAME_DATA.secretUlts) {
+                var list2 = GAME_DATA.secretUlts[wt2];
+                for (var j = 0; j < list2.length; j++) {
+                    if (list2[j].id === miji.skillId) {
+                        skillData = list2[j];
+                        isUlt = true;
+                        break;
+                    }
+                }
+                if (skillData) break;
+            }
+        }
+        if (!skillData) {
+            UI.showModal('错误', '技能数据不存在！');
+            return;
+        }
+        // 检查兵器类型是否匹配
+        var heroWeapon = hero.equip && hero.equip.weapon && hero.equip.weapon.type ? hero.equip.weapon.type : 'quan';
+        if (skillData.weaponType && skillData.weaponType !== heroWeapon) {
+            var wtName = GAME_DATA.weaponTypes[skillData.weaponType] ? GAME_DATA.weaponTypes[skillData.weaponType].name : skillData.weaponType;
+            UI.showModal('提示', '当前装备无法研读此秘籍！需要装备' + wtName + '类兵器。');
+            return;
+        }
+        // 检查是否已学会
+        if (isUlt) {
+            for (var ku = 0; ku < hero.knownUlts.length; ku++) {
+                if (hero.knownUlts[ku].id === miji.skillId) {
+                    UI.showModal('提示', '你已经学会奥义「' + skillData.name + '」了！');
+                    return;
+                }
+            }
+        } else {
+            for (var ks = 0; ks < hero.knownSkills.length; ks++) {
+                if (hero.knownSkills[ks].id === miji.skillId) {
+                    UI.showModal('提示', '你已经学会技能「' + skillData.name + '」了！');
+                    return;
+                }
+            }
+        }
+        // 扣除秘籍
+        if (!this.consumeItem(mijiId, 1)) {
+            UI.showModal('提示', '秘籍不足！');
+            return;
+        }
+        // 学习
+        var newSkill = copyObj(skillData);
+        if (isUlt) {
+            hero.knownUlts.push(newSkill);
+        } else {
+            hero.knownSkills.push(newSkill);
+        }
+        Game.saveGame();
+        var typeName = isUlt ? '奥义' : '技能';
+        UI.showModal('领悟成功', '你研读了「' + miji.name + '」，领悟了' + typeName + '「' + skillData.name + '」！');
+        if (Game.currentScreen === 'bag') UI.renderBag();
+    }
 };
 
 // 深度拷贝辅助
