@@ -67,13 +67,8 @@ var Game = {
         if (screenId === 'smith') UI.renderSmith();
         if (screenId === 'tasks') UI.renderTasks();
         if (screenId === 'config') UI.renderConfig();
-        if (screenId === 'unit-config') {
-            if (options && options.unitId) UI.configTargetId = options.unitId;
-            UI.renderUnitConfig();
-        }
+        if (screenId === 'unit-config') UI.renderUnitConfig();
     },
-    // ===== 角色创建 =====
-
     // ===== 角色创建 =====
     // 开局5级，20点自由分配
     createAttrs: { bili: 5, shenfa: 5, gengu: 5, fuqi: 5 },

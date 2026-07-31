@@ -541,6 +541,9 @@ var UI = {
     configTargetId: null,
 
     openUnitConfig: function(unitId) {
+        UI.configTargetId = unitId;
+        Game.toScreen('unit-config');
+    },
         Game.toScreen('unit-config', { unitId: unitId });
     },
 
