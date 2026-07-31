@@ -458,16 +458,26 @@ var Game = {
         hero.equippedSkills = [null, null];
         hero.equippedUlt = null;
 
-        // 重新计算可学技能
+        // 重新计算可学技能（保留所有已学技能，只添加新武器类型的默认技能）
         var wType = weapon.type;
         var skillList = GAME_DATA.heroSkills[wType];
-        hero.knownSkills = [];
-        for (var i = 0; i < skillList.length; i++) {
-            if (hero.level >= skillList[i].levelNeed) {
-                hero.knownSkills.push(copyObj(skillList[i]));
+        if (skillList) {
+            for (var i = 0; i < skillList.length; i++) {
+                // 只检查默认技能(levelNeed=5)，保留其他武器类型和秘籍技能
+                if (skillList[i].levelNeed === 5) {
+                    var hasIt = false;
+                    for (var j = 0; j < hero.knownSkills.length; j++) {
+                        if (hero.knownSkills[j].id === skillList[i].id) {
+                            hasIt = true;
+                            break;
+                        }
+                    }
+                    if (!hasIt) {
+                        hero.knownSkills.push(copyObj(skillList[i]));
+                    }
+                }
             }
         }
-
         Game.saveGame();
         UI.renderConfigDetail('hero');
         UI.showModal('装备更换', '你已装备 <b>' + weapon.name + '</b>！<br><br>技能已根据兵器类型重新配置。');
@@ -515,16 +525,28 @@ var Game = {
             unit.equippedUlt = null;
             var wType = weapon.type;
             var skillList = GAME_DATA.heroSkills[wType];
-            unit.knownSkills = [];
-            for (var k = 0; k < skillList.length; k++) {
-                if (unit.level >= skillList[k].levelNeed) {
-                    unit.knownSkills.push(copyObj(skillList[k]));
+            if (skillList) {
+                for (var k = 0; k < skillList.length; k++) {
+                    // 只检查默认技能(levelNeed=5)，保留其他武器类型和秘籍技能
+                    if (skillList[k].levelNeed === 5) {
+                        var hasIt2 = false;
+                        for (var m = 0; m < unit.knownSkills.length; m++) {
+                            if (unit.knownSkills[m].id === skillList[k].id) {
+                                hasIt2 = true;
+                                break;
+                            }
+                        }
+                        if (!hasIt2) {
+                            unit.knownSkills.push(copyObj(skillList[k]));
+                        }
+                    }
                 }
             }
         }
         Game.saveGame();
         UI.renderConfigDetail(unit.id);
         UI.showModal('装备更换', unit.name + ' 已装备 <b>' + weapon.name + '</b>！');
+
     },
 
     // ===== 主角技能配置 =====
@@ -539,6 +561,14 @@ var Game = {
             }
         }
         if (!skill) return;
+
+        // 检查武器类型是否匹配（只能装备当前兵器类型的技能）
+        var currentWeaponType = hero.equip && hero.equip.weapon && hero.equip.weapon.type ? hero.equip.weapon.type : 'quan';
+        if (skill.weaponType && skill.weaponType !== currentWeaponType) {
+            var wtName = GAME_DATA.weaponTypes[skill.weaponType] ? GAME_DATA.weaponTypes[skill.weaponType].name : skill.weaponType;
+            UI.showModal('提示', '该技能需要装备' + wtName + '类兵器才能使用！');
+            return;
+        }
 
         // 检查是否已装备在另一槽位
         for (var j = 0; j < hero.equippedSkills.length; j++) {
@@ -555,14 +585,23 @@ var Game = {
     equipUlt: function(ultId) {
         var hero = this.state.hero;
         // 验证该奥义是否已学会
-        var hasUlt = false;
+        var ult = null;
         for (var i = 0; i < hero.knownUlts.length; i++) {
             if (hero.knownUlts[i].id === ultId) {
-                hasUlt = true;
+                ult = hero.knownUlts[i];
                 break;
             }
         }
-        if (!hasUlt) return;
+        if (!ult) return;
+
+        // 检查武器类型是否匹配（只能装备当前兵器类型的奥义）
+        var currentWeaponType = hero.equip && hero.equip.weapon && hero.equip.weapon.type ? hero.equip.weapon.type : 'quan';
+        if (ult.weaponType && ult.weaponType !== currentWeaponType) {
+            var wtName = GAME_DATA.weaponTypes[ult.weaponType] ? GAME_DATA.weaponTypes[ult.weaponType].name : ult.weaponType;
+            UI.showModal('提示', '该奥义需要装备' + wtName + '类兵器才能使用！');
+            return;
+        }
+
         hero.equippedUlt = ultId;
         Game.saveGame();
         UI.renderConfigDetail('hero');
