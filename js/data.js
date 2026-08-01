@@ -147,168 +147,355 @@ var GAME_DATA = {
     // 所有武将招募时自带2个技能，奥义需羁绊2级解锁
     // 招募等级 = 获得难度（关平5级，吕布40级）
     heroes: {
+        // ========== 精锐武将（2技能 + 1奥义）==========
+
         // --- 开局武将 ---
         guanping: {
             id: 'guanping', name: '关平', avatar: '⚔️', faction: '蜀',
-            weapon: 'jian', growth: 'mengjiang', recruitLevel: 5,
+            weapon: 'jian', growth: 'tiebi', recruitLevel: 5,
             str: 8, agi: 6, vit: 7, luk: 5,
             skills: {
-                s1: { name: '龙鳞一击', type: 'skill', cost: 15, cd: 3, desc: '单体180%伤害', effect: { dmg: 1.8 } },
-                s2: { name: '忠护', type: 'skill', cost: 25, cd: 4, desc: '帮队友抵挡2次伤害，反弹30%给伤害来源', effect: { protect: 2, reflect: 0.3 } },
-                ult: { name: '龙鳞血战', type: 'ult', desc: '根据损失血量提升攻击力（每损10%HP攻击+10%，最高+100%）', effect: { hpScaleDmg: 0.1 } }
+                s1: { name: '龙鳞一击', type: 'skill', cost: 25, cd: 3, desc: '对单体造成140%伤害，提高自身15%防御，持续2回合', effect: { dmg: 1.4, selfBuff: { def: 0.15, turns: 2 } } },
+                s2: { name: '忠护', type: 'skill', cost: 30, cd: 4, desc: '为一名队友抵挡2次攻击，反弹30%伤害给伤害来源，持续2回合', effect: { protect: 2, reflect: 0.3, turns: 2 } },
+                ult: { name: '龙鳞血战', type: 'ult', desc: '根据已损失生命值的百分比提升攻击力（每损失10%生命，攻击+8%），对单体造成220%伤害，并获得1回合无敌', effect: { hpScaleDmg: 0.08, dmg: 2.2, invincible: 1 } }
             },
             unlock: { type: 'start' }
         },
 
-        // --- 第一章解锁 ---
+        // --- 第一章精锐任务 ---
+        liaohua: {
+            id: 'liaohua', name: '廖化', avatar: '🔱', faction: '蜀',
+            weapon: 'qiang', growth: 'mengjiang', recruitLevel: 8,
+            str: 9, agi: 7, vit: 6, luk: 5,
+            skills: {
+                s1: { name: '先锋突', type: 'skill', cost: 25, cd: 3, desc: '对单体造成130%伤害，有35%概率降低目标20%防御，持续2回合', effect: { dmg: 1.3, debuffDef: { chance: 0.35, val: 0.2, turns: 2 } } },
+                s2: { name: '老当益壮', type: 'skill', cost: 30, cd: 4, desc: '自身攻击提升20%，持续3回合；若当前生命低于50%，额外回复12%最大生命', effect: { selfBuff: { atk: 0.2, turns: 3 }, lowHpHeal: { threshold: 0.5, healPct: 0.12 } } },
+                ult: { name: '千里单骑', type: 'ult', desc: '对敌方最前一排造成170%伤害，若目标防御已降低，则伤害提升至230%', effect: { frontDmg: 1.7, frontDmgBonus: 2.3 } }
+            },
+            unlock: { type: 'elite', chapter: 1 }
+        },
+        zhangyi: {
+            id: 'zhangyi', name: '张翼', avatar: '🔱', faction: '蜀',
+            weapon: 'qiang', growth: 'mengjiang', recruitLevel: 10,
+            str: 9, agi: 8, vit: 6, luk: 5,
+            skills: {
+                s1: { name: '连刺', type: 'skill', cost: 25, cd: 3, desc: '对单体造成2次攻击，每次75%伤害；若暴击则追加第3次（60%）', effect: { hits: 2, dmg: 0.75, critExtraHit: { dmg: 0.6 } } },
+                s2: { name: '猛攻', type: 'skill', cost: 30, cd: 4, desc: '牺牲自身10%当前生命，对单体造成190%伤害，本次攻击暴击率+20%', effect: { hpCost: 0.1, dmg: 1.9, selfBuff: { crit: 0.2, turns: 1 } } },
+                ult: { name: '破军之势', type: 'ult', desc: '对单体造成260%伤害，无视目标25%防御；若击杀目标，立即回复30%最大内力', effect: { dmg: 2.6, pierceDef: 0.25, killMpRegen: 0.3 } }
+            },
+            unlock: { type: 'elite', chapter: 1 }
+        },
+
+        // --- 第二章精锐任务 ---
+        zhoucang: {
+            id: 'zhoucang', name: '周仓', avatar: '🔪', faction: '蜀',
+            weapon: 'dao', growth: 'mengjiang', recruitLevel: 12,
+            str: 10, agi: 7, vit: 7, luk: 4,
+            skills: {
+                s1: { name: '断喝', type: 'skill', cost: 25, cd: 4, desc: '对单体造成120%伤害，有40%概率使目标眩晕1回合', effect: { dmg: 1.2, stunChance: 0.4, turns: 1 } },
+                s2: { name: '追斩', type: 'skill', cost: 25, cd: 3, desc: '对生命最低的目标造成130%伤害；若目标生命低于30%，伤害提升至210%', effect: { lowHpDmg: { dmg: 1.3, bonusDmg: 2.1, threshold: 0.3 } } },
+                ult: { name: '刀光乱舞', type: 'ult', desc: '对随机3个敌方目标各造成125%伤害；若目标被眩晕，额外造成80%伤害', effect: { randomHits: 3, dmg: 1.25, stunBonus: 0.8 } }
+            },
+            unlock: { type: 'elite', chapter: 2 }
+        },
+        lidian: {
+            id: 'lidian', name: '李典', avatar: '🔱', faction: '魏',
+            weapon: 'qiang', growth: 'xiaoxiong', recruitLevel: 12,
+            str: 7, agi: 7, vit: 7, luk: 6,
+            skills: {
+                s1: { name: '绊马索', type: 'skill', cost: 20, cd: 3, desc: '对单体造成110%伤害，降低目标25%速度，持续2回合', effect: { dmg: 1.1, debuffSpeed: { val: 0.25, turns: 2 } } },
+                s2: { name: '疑兵', type: 'skill', cost: 35, cd: 5, desc: '降低敌方全体15%命中，持续2回合；给我方全体增加10%闪避，持续2回合', effect: { debuffTeamHit: { val: 0.15, turns: 2 }, buffTeamDodge: { val: 0.1, turns: 2 } } },
+                ult: { name: '埋伏阵', type: 'ult', desc: '对敌方全体造成140%伤害，有25%概率使目标混乱1回合', effect: { allDmg: 1.4, confuseChance: 0.25, turns: 1 } }
+            },
+            unlock: { type: 'elite', chapter: 2 }
+        },
+
+        // --- 第三章精锐任务 ---
+        chengpu: {
+            id: 'chengpu', name: '程普', avatar: '🔱', faction: '吴',
+            weapon: 'qiang', growth: 'mengjiang', recruitLevel: 15,
+            str: 9, agi: 7, vit: 8, luk: 5,
+            skills: {
+                s1: { name: '裂阵', type: 'skill', cost: 25, cd: 3, desc: '对敌方最前一排造成115%伤害，降低其15%防御，持续2回合', effect: { frontDmg: 1.15, debuffDef: { val: 0.15, turns: 2 } } },
+                s2: { name: '老谋', type: 'skill', cost: 30, cd: 4, desc: '自身闪避提升25%，持续2回合；闪避成功后立即反击（80%伤害）', effect: { selfBuff: { dodge: 0.25, turns: 2 }, counterDmg: 0.8 } },
+                ult: { name: '江东猛虎', type: 'ult', desc: '对敌方全体造成150%伤害；若敌方有单位处于防御降低状态，则该单位额外受到60%伤害', effect: { allDmg: 1.5, debuffBonus: 0.6 } }
+            },
+            unlock: { type: 'elite', chapter: 3 }
+        },
+
+        // --- 第四章精锐任务 ---
+        huanggai: {
+            id: 'huanggai', name: '黄盖', avatar: '🔪', faction: '吴',
+            weapon: 'dao', growth: 'tiebi', recruitLevel: 18,
+            str: 10, agi: 6, vit: 9, luk: 4,
+            skills: {
+                s1: { name: '苦肉', type: 'skill', cost: 25, cd: 3, desc: '牺牲自身15%当前生命，对单体造成170%伤害，并嘲讽目标1回合', effect: { hpCost: 0.15, dmg: 1.7, taunt: 1 } },
+                s2: { name: '铁壁', type: 'skill', cost: 30, cd: 4, desc: '自身防御提升30%，持续2回合；期间受到的攻击有20%概率完全格挡', effect: { selfBuff: { def: 0.3, turns: 2 }, blockChance: 0.2 } },
+                ult: { name: '烈焰焚舟', type: 'ult', desc: '对敌方全体造成160%火属性伤害，自身损失20%最大生命；每有一个敌方单位，伤害提升10%', effect: { allDmg: 1.6, element: 'fire', selfHpCost: 0.2, perEnemyBonus: 0.1 } }
+            },
+            unlock: { type: 'elite', chapter: 4 }
+        },
+        caohong: {
+            id: 'caohong', name: '曹洪', avatar: '🔪', faction: '魏',
+            weapon: 'dao', growth: 'tiebi', recruitLevel: 18,
+            str: 9, agi: 6, vit: 10, luk: 4,
+            skills: {
+                s1: { name: '舍命', type: 'skill', cost: 30, cd: 4, desc: '为一名队友承受下一次攻击的全部伤害，并反弹25%给攻击者', effect: { protectOnce: true, reflect: 0.25 } },
+                s2: { name: '血战', type: 'skill', cost: 25, cd: 5, desc: '自身生命越低防御越高（每损失10%生命，防御+5%），持续3回合', effect: { hpScaleDef: { perHp: 0.1, defBonus: 0.05, turns: 3 } } },
+                ult: { name: '护卫之魂', type: 'ult', desc: '给我方全体增加护盾（护盾值=曹洪最大生命的15%），持续2回合；护盾存在时受到的伤害减免20%', effect: { shieldAll: { hpPct: 0.15, turns: 2 }, shieldDmgReduce: 0.2 } }
+            },
+            unlock: { type: 'elite', chapter: 4 }
+        },
+
+        // --- 第五章精锐任务 ---
+        daqiao: {
+            id: 'daqiao', name: '大乔', avatar: '🏹', faction: '吴',
+            weapon: 'gong', growth: 'jiyun', recruitLevel: 22,
+            str: 5, agi: 8, vit: 6, luk: 10,
+            skills: {
+                s1: { name: '回春箭', type: 'skill', cost: 25, cd: 3, desc: '回复我方生命最低的单位15%最大生命，并解除1个负面状态', effect: { healLowest: 0.15, dispel: 1 } },
+                s2: { name: '凝神', type: 'skill', cost: 35, cd: 5, desc: '给我方全体增加15%攻击和10%速度，持续2回合', effect: { buffTeam: { atk: 0.15, speed: 0.1, turns: 2 } } },
+                ult: { name: '惊鸿之舞', type: 'ult', desc: '回复我方全体20%最大生命，给全体增加「庇护」（受到的下一次伤害减免50%）', effect: { healAll: 0.2, grantShield: { dmgReduce: 0.5, hits: 1 } } }
+            },
+            unlock: { type: 'elite', chapter: 5 }
+        },
+        xiaoqiao: {
+            id: 'xiaoqiao', name: '小乔', avatar: '🏹', faction: '吴',
+            weapon: 'gong', growth: 'jiyun', recruitLevel: 22,
+            str: 5, agi: 9, vit: 5, luk: 11,
+            skills: {
+                s1: { name: '迷魂箭', type: 'skill', cost: 25, cd: 3, desc: '对单体造成100%伤害，有35%概率使目标沉睡1回合', effect: { dmg: 1.0, sleepChance: 0.35, turns: 1 } },
+                s2: { name: '灵巧', type: 'skill', cost: 30, cd: 4, desc: '给我方全体增加20%闪避，持续2回合', effect: { buffTeam: { dodge: 0.2, turns: 2 } } },
+                ult: { name: '流风回雪', type: 'ult', desc: '对敌方全体造成125%冰属性伤害，降低全体30%速度，持续2回合；给我方全体增加15%速度，持续2回合', effect: { allDmg: 1.25, element: 'ice', debuffTeamSpeed: { val: 0.3, turns: 2 }, buffTeamSpeed: { val: 0.15, turns: 2 } } }
+            },
+            unlock: { type: 'elite', chapter: 5 }
+        },
+
+        // --- 第六章精锐任务 ---
+        caiwenji: {
+            id: 'caiwenji', name: '蔡文姬', avatar: '🏹', faction: '魏',
+            weapon: 'gong', growth: 'jiyun', recruitLevel: 25,
+            str: 5, agi: 7, vit: 6, luk: 10,
+            skills: {
+                s1: { name: '胡笳鸣', type: 'skill', cost: 30, cd: 4, desc: '回复我方全体10%最大生命，并解除1个负面状态（优先解除控制类）', effect: { healAll: 0.1, dispel: 1 } },
+                s2: { name: '悲歌', type: 'skill', cost: 30, cd: 4, desc: '降低敌方全体10%攻击，持续2回合；若敌方有单位处于控制状态，该单位额外降低15%攻击', effect: { debuffTeamAtk: { val: 0.1, turns: 2 }, ctrlExtraDebuff: 0.15 } },
+                ult: { name: '天籁之音', type: 'ult', desc: '回复我方全体18%最大生命，解除所有负面状态，并给全体增加15%防御，持续2回合', effect: { healAll: 0.18, dispelAll: true, buffTeamDef: { val: 0.15, turns: 2 } } }
+            },
+            unlock: { type: 'elite', chapter: 6 }
+        },
+
+        // --- 第八章精锐任务 ---
+        xushu: {
+            id: 'xushu', name: '徐庶', avatar: '⚔️', faction: '蜀',
+            weapon: 'jian', growth: 'qimen', recruitLevel: 30,
+            str: 7, agi: 9, vit: 6, luk: 8,
+            skills: {
+                s1: { name: '奇策', type: 'skill', cost: 25, cd: 3, desc: '对单体造成130%伤害，有30%概率封印目标1回合', effect: { dmg: 1.3, sealChance: 0.3, turns: 1 } },
+                s2: { name: '识破', type: 'skill', cost: 30, cd: 4, desc: '给我方全体增加20%命中，持续2回合；敌方全体闪避降低15%，持续2回合', effect: { buffTeamHit: { val: 0.2, turns: 2 }, debuffTeamDodge: { val: 0.15, turns: 2 } } },
+                ult: { name: '一剑封喉', type: 'ult', desc: '对单体造成250%伤害，若目标处于封印状态，伤害提升至350%并延长封印1回合', effect: { dmg: 2.5, sealBonusDmg: 3.5, extendSeal: 1 } }
+            },
+            unlock: { type: 'elite', chapter: 8 }
+        },
+
+        // --- 第十章精锐任务 ---
+        huangyueying: {
+            id: 'huangyueying', name: '黄月英', avatar: '🏹', faction: '蜀',
+            weapon: 'gong', growth: 'qimen', recruitLevel: 35,
+            str: 6, agi: 8, vit: 6, luk: 9,
+            skills: {
+                s1: { name: '连弩齐射', type: 'skill', cost: 25, cd: 3, desc: '对敌方随机2个目标各造成100%伤害；若2发命中同一目标，第2发伤害提升至150%', effect: { randomHits: 2, dmg: 1.0, sameTargetBonus: 1.5 } },
+                s2: { name: '机关陷阱', type: 'skill', cost: 30, cd: 4, desc: '下回合开始时对敌方全体造成80%伤害，并有25%概率使目标定身1回合', effect: { delayAoe: { dmg: 0.8, turns: 1 }, rootChance: 0.25, rootTurns: 1 } },
+                ult: { name: '天工开物', type: 'ult', desc: '召唤机关兽攻击敌方全体，造成180%伤害；若目标被定身，额外造成100%伤害并眩晕1回合', effect: { allDmg: 1.8, rootedBonusDmg: 1.0, rootedStun: 1 } }
+            },
+            unlock: { type: 'elite', chapter: 10 }
+        },
+
+        // ========== 传说武将（3技能 + 1奥义）==========
+
+        // --- 第一章通关：刘备 ---
+        liubei: {
+            id: 'liubei', name: '刘备', avatar: '👑', faction: '蜀',
+            weapon: 'jian', growth: 'xiaoxiong', recruitLevel: 10,
+            str: 7, agi: 7, vit: 8, luk: 8,
+            skills: {
+                s1: { name: '仁德', type: 'skill', cost: 25, cd: 3, desc: '回复我方生命最低的单位18%最大生命，给该单位增加15%防御，持续2回合', effect: { healLowest: 0.18, buffDef: { val: 0.15, turns: 2 } } },
+                s2: { name: '激将', type: 'skill', cost: 30, cd: 4, desc: '给一名友方单位增加25%攻击和20%暴击率，持续2回合', effect: { buffAlly: { atk: 0.25, crit: 0.2, turns: 2 } } },
+                s3: { name: '以德服人', type: 'skill', cost: 25, cd: 3, desc: '对单体造成100%伤害，有35%概率使目标缴械1回合', effect: { dmg: 1.0, disarmChance: 0.35, turns: 1 } },
+                ult: { name: '桃园结义', type: 'ult', desc: '回复我方全体25%最大生命，解除所有负面状态，给全体增加「仁德庇护」（受到致命伤害时保留1点生命，持续2回合）', effect: { healAll: 0.25, dispelAll: true, grantDieHard: { turns: 2 } } }
+            },
+            unlock: { type: 'story', chapter: 1 }
+        },
+
+        // --- 第二章传说任务：张飞 ---
         zhangfei: {
             id: 'zhangfei', name: '张飞', avatar: '🐍', faction: '蜀',
-            weapon: 'qiang', growth: 'mengjiang', recruitLevel: 10,
+            weapon: 'qiang', growth: 'mengjiang', recruitLevel: 15,
             str: 13, agi: 6, vit: 10, luk: 5,
             skills: {
-                s1: { name: '咆哮', type: 'skill', cost: 20, cd: 3, desc: '降低敌方全体攻击15%', effect: { debuffAtk: 0.15 } },
-                s2: { name: '横扫', type: 'skill', cost: 30, cd: 4, desc: '十字范围180%伤害', effect: { aoe: 'cross', dmg: 1.8 } },
-                ult: { name: '当阳断喝', type: 'ult', desc: '全体震慑1回合+300%伤害', effect: { stunAll: true, dmg: 3.0 } }
+                s1: { name: '燕人咆哮', type: 'skill', cost: 30, cd: 3, desc: '对敌方最前一排造成135%伤害，有40%概率使目标恐惧1回合', effect: { frontDmg: 1.35, fearChance: 0.4, turns: 1 } },
+                s2: { name: '酣战', type: 'skill', cost: 30, cd: 4, desc: '对单体造成190%伤害，自身损失5%最大生命；若暴击，回复15%最大生命', effect: { dmg: 1.9, selfHpCost: 0.05, critHeal: 0.15 } },
+                s3: { name: '酒壮胆', type: 'skill', cost: 25, cd: 5, desc: '自身攻击+20%，受到的控制效果持续时间减少1回合，持续3回合', effect: { selfBuff: { atk: 0.2, turns: 3 }, ccReduce: 1 } },
+                ult: { name: '当阳断桥', type: 'ult', desc: '对敌方全体造成190%伤害，有50%概率使目标恐惧1回合；若敌方已有恐惧状态，则恐惧延长1回合', effect: { allDmg: 1.9, fearChance: 0.5, turns: 1, extendFear: true } }
             },
-            unlock: { type: 'story', chapter: 1, stage: 6 }
+            unlock: { type: 'legend', chapter: 2 }
         },
 
-        // --- 第二章解锁 ---
-        guanyu: {
-            id: 'guanyu', name: '关羽', avatar: '🐉', faction: '蜀',
-            weapon: 'dao', growth: 'mengjiang', recruitLevel: 15,
-            str: 12, agi: 7, vit: 9, luk: 6,
-            skills: {
-                s1: { name: '拖刀计', type: 'skill', cost: 20, cd: 3, desc: '下回合攻击+80%', effect: { nextDmg: 0.8 } },
-                s2: { name: '武圣斩', type: 'skill', cost: 30, cd: 4, desc: '单体250%伤害，50%破甲', effect: { dmg: 2.5, breakArmor: 0.5 } },
-                ult: { name: '青龙斩', type: 'ult', desc: '扇形300%伤害，吸血20%', effect: { aoe: 'fan', dmg: 3.0, drain: 0.2 } }
-            },
-            unlock: { type: 'story', chapter: 2, stage: 8 }
-        },
+        // --- 第三章通关：曹操 ---
         caocao: {
             id: 'caocao', name: '曹操', avatar: '🦅', faction: '魏',
-            weapon: 'jian', growth: 'xiaoxiong', recruitLevel: 20,
+            weapon: 'jian', growth: 'xiaoxiong', recruitLevel: 15,
             str: 9, agi: 8, vit: 8, luk: 8,
             skills: {
-                s1: { name: '奸雄', type: 'skill', cost: 20, cd: 3, desc: '偷取目标10%攻击', effect: { stealAtk: 0.1 } },
-                s2: { name: '号令', type: 'skill', cost: 30, cd: 4, desc: '全体攻击+20%', effect: { teamBuff: { atk: 0.2, turns: 3 } } },
-                ult: { name: '横槊赋诗', type: 'ult', desc: '全体250%伤害+吸血15%', effect: { allDmg: 2.5, drain: 0.15 } }
+                s1: { name: '奸雄', type: 'skill', cost: 25, cd: 3, desc: '对单体造成140%伤害，偷取目标10%的攻击（可叠加，最多3层），持续3回合', effect: { dmg: 1.4, stealAtk: { val: 0.1, maxStack: 3, turns: 3 } } },
+                s2: { name: '号令天下', type: 'skill', cost: 35, cd: 5, desc: '给我方全体增加15%攻击和10%速度，持续2回合；若场上有3名及以上友方单位，额外增加10%暴击率', effect: { buffTeam: { atk: 0.15, speed: 0.1, turns: 2 }, extraCritIf3Allies: 0.1 } },
+                s3: { name: '唯才是举', type: 'skill', cost: 30, cd: 5, desc: '立即为一名友方单位回复20%最大内力，并使其下回合技能冷却减少1回合', effect: { healMpAlly: 0.2, cdReduce: 1 } },
+                ult: { name: '魏武霸业', type: 'ult', desc: '对敌方全体造成210%伤害，给敌方全体施加「威压」（攻击力-15%，速度-15%，持续2回合）；给我方全体回复10%最大内力', effect: { allDmg: 2.1, debuffTeam: { atk: 0.15, speed: 0.15, turns: 2 }, healMpAll: 0.1 } }
             },
-            unlock: { type: 'story', chapter: 1, stage: 12 }
-        },
-        xuchu: {
-            id: 'xuchu', name: '许褚', avatar: '🐯', faction: '魏',
-            weapon: 'quan', growth: 'mengjiang', recruitLevel: 20,
-            str: 13, agi: 5, vit: 11, luk: 4,
-            skills: {
-                s1: { name: '裸衣', type: 'skill', cost: 20, cd: 3, desc: '牺牲10%HP，伤害+60%', effect: { hpCost: 0.1, dmgBoost: 0.6 } },
-                s2: { name: '虎痴', type: 'skill', cost: 30, cd: 4, desc: '3段攻击，每段80%', effect: { hits: 3, dmg: 0.8 } },
-                ult: { name: '霸天战意', type: 'ult', desc: '单体400%伤害，自身无敌1回合', effect: { dmg: 4.0, invincible: 1 } }
-            },
-            unlock: { type: 'story', chapter: 2, stage: 5 }
+            unlock: { type: 'story', chapter: 3 }
         },
 
-        // --- 传说任务解锁（25级） ---
+        // --- 第三章传说任务：貂蝉 ---
+        diaochan: {
+            id: 'diaochan', name: '貂蝉', avatar: '🌸', faction: '群雄',
+            weapon: 'gong', growth: 'jiyun', recruitLevel: 20,
+            str: 5, agi: 10, vit: 5, luk: 13,
+            skills: {
+                s1: { name: '闭月', type: 'skill', cost: 25, cd: 3, desc: '对单体造成110%伤害，有40%概率使目标魅惑1回合', effect: { dmg: 1.1, charmChance: 0.4, turns: 1 } },
+                s2: { name: '羞花', type: 'skill', cost: 30, cd: 4, desc: '降低敌方全体12%攻击，持续2回合；若敌方有男性角色，额外降低8%攻击', effect: { debuffTeamAtk: { val: 0.12, turns: 2 }, maleExtraDebuff: 0.08 } },
+                s3: { name: '离间', type: 'skill', cost: 35, cd: 5, desc: '对2个敌方目标造成90%伤害，并使其互相攻击1次', effect: { hits: 2, dmg: 0.9, forceAttackEachOther: true } },
+                ult: { name: '倾国倾城', type: 'ult', desc: '对敌方全体造成160%伤害，有50%概率使目标魅惑1回合；被魅惑的目标攻击自己人时，伤害+20%', effect: { allDmg: 1.6, charmChance: 0.5, turns: 1, charmedDmgBoost: 0.2 } }
+            },
+            unlock: { type: 'legend', chapter: 3 }
+        },
+
+        // --- 第四章传说任务：关羽 ---
+        guanyu: {
+            id: 'guanyu', name: '关羽', avatar: '🐉', faction: '蜀',
+            weapon: 'dao', growth: 'mengjiang', recruitLevel: 20,
+            str: 12, agi: 7, vit: 9, luk: 6,
+            skills: {
+                s1: { name: '春秋斩', type: 'skill', cost: 30, cd: 3, desc: '对单体造成160%伤害；若目标生命低于50%，伤害提升至240%', effect: { dmg: 1.6, lowHpBonusDmg: { threshold: 0.5, bonusDmg: 2.4 } } },
+                s2: { name: '武圣之威', type: 'skill', cost: 30, cd: 5, desc: '自身攻击提升25%，暴击率提升20%，持续3回合', effect: { selfBuff: { atk: 0.25, crit: 0.2, turns: 3 } } },
+                s3: { name: '拖刀计', type: 'skill', cost: 25, cd: 4, desc: '本回合进入防御姿态（受到的伤害减免40%），下回合对攻击者进行一次200%伤害的反击', effect: { defend: { dmgReduce: 0.4, turns: 1 }, counterNext: { dmg: 2.0 } } },
+                ult: { name: '青龙偃月', type: 'ult', desc: '对单体造成320%伤害，无视30%防御；若击杀目标，立即对另一生命最低的敌方释放一次「春秋斩」', effect: { dmg: 3.2, pierceDef: 0.3, killChain: true } }
+            },
+            unlock: { type: 'legend', chapter: 4 }
+        },
+        dianwei: {
+            id: 'dianwei', name: '典韦', avatar: '👊', faction: '魏',
+            weapon: 'quan', growth: 'tiebi', recruitLevel: 20,
+            str: 13, agi: 6, vit: 12, luk: 4,
+            skills: {
+                s1: { name: '恶来擒拿', type: 'skill', cost: 25, cd: 3, desc: '对单体造成130%伤害，有45%概率使目标定身1回合', effect: { dmg: 1.3, rootChance: 0.45, turns: 1 } },
+                s2: { name: '古之恶来', type: 'skill', cost: 30, cd: 4, desc: '自身防御+25%，反弹伤害+30%，持续2回合；期间受到攻击时，有20%概率立即反击', effect: { selfBuff: { def: 0.25, turns: 2 }, reflectBonus: 0.3, counterChance: 0.2 } },
+                s3: { name: '掷戟', type: 'skill', cost: 30, cd: 4, desc: '对敌方单体造成160%伤害，若目标正在攻击我方其他单位，则强制将目标攻击目标改为典韦，持续1回合', effect: { dmg: 1.6, taunt: 1 } },
+                ult: { name: '死战不退', type: 'ult', desc: '牺牲自身30%当前生命，给自身增加「不屈」状态2回合：受到的所有伤害减免50%，反弹伤害提升至50%，每次受到攻击都会反击', effect: { selfHpCost: 0.3, buffSelf: { dmgReduce: 0.5, reflect: 0.5, autoCounter: true, turns: 2 } } }
+            },
+            unlock: { type: 'legend', chapter: 4 }
+        },
+
+        // --- 第五章通关：孙权 ---
+        sunquan: {
+            id: 'sunquan', name: '孙权', avatar: '⚔️', faction: '吴',
+            weapon: 'jian', growth: 'xiaoxiong', recruitLevel: 22,
+            str: 7, agi: 8, vit: 8, luk: 9,
+            skills: {
+                s1: { name: '制衡', type: 'skill', cost: 30, cd: 4, desc: '随机转移我方一个负面状态给敌方随机单位，并给该友方单位回复12%最大生命', effect: { transferDebuff: true, healAlly: 0.12 } },
+                s2: { name: '坚守', type: 'skill', cost: 35, cd: 5, desc: '给我方最前一排增加护盾（护盾值=孙权最大生命的20%），持续2回合；护盾破裂时对攻击者造成100%反弹伤害', effect: { shieldFront: { hpPct: 0.2, turns: 2 }, shieldBreakReflect: 1.0 } },
+                s3: { name: '纳贤', type: 'skill', cost: 30, cd: 5, desc: '给我方全体增加10%内力恢复速度，持续3回合；期间我方每次使用技能，有15%概率不进入冷却', effect: { buffTeamMpRegen: { val: 0.1, turns: 3 }, skillNoCdChance: 0.15 } },
+                ult: { name: '江东之主', type: 'ult', desc: '给我方全体增加20%攻击和20%防御，持续3回合；期间我方每行动1次，全体回复5%最大生命', effect: { buffTeam: { atk: 0.2, def: 0.2, turns: 3 }, perActionHeal: 0.05 } }
+            },
+            unlock: { type: 'story', chapter: 5 }
+        },
+
+        // --- 第六章传说任务：赵云 ---
         zhaoyun: {
             id: 'zhaoyun', name: '赵云', avatar: '⚡', faction: '蜀',
             weapon: 'qiang', growth: 'youlong', recruitLevel: 25,
             str: 9, agi: 13, vit: 7, luk: 8,
             skills: {
-                s1: { name: '七探', type: 'skill', cost: 20, cd: 2, desc: '7次40%伤害', effect: { hits: 7, dmg: 0.4 } },
-                s2: { name: '盘蛇', type: 'skill', cost: 25, cd: 3, desc: '闪避+50%，闪避后反击', effect: { dodge: 0.5, counter: 1.8 } },
-                ult: { name: '银龙逆鳞', type: 'ult', desc: '直线350%伤害，自身增益', effect: { lineDmg: 3.5, selfBuff: { atk: 0.3, dodge: 0.2, turns: 2 } } }
+                s1: { name: '龙胆', type: 'skill', cost: 25, cd: 3, desc: '对单体造成150%伤害，自身闪避提升20%，持续2回合', effect: { dmg: 1.5, selfBuff: { dodge: 0.2, turns: 2 } } },
+                s2: { name: '七进七出', type: 'skill', cost: 30, cd: 4, desc: '对随机3个敌方目标各造成100%伤害；每命中一个目标，自身回复5%最大生命', effect: { randomHits: 3, dmg: 1.0, perHitHeal: 0.05 } },
+                s3: { name: '银枪护主', type: 'skill', cost: 30, cd: 4, desc: '给一名友方单位增加20%闪避，持续2回合；该友方闪避成功后，赵云自动对其身边敌人造成100%伤害', effect: { buffAllyDodge: { val: 0.2, turns: 2 }, allyDodgeCounter: 1.0 } },
+                ult: { name: '常胜将军', type: 'ult', desc: '进入「龙魂」状态3回合：闪避率+30%，闪避后自动反击（130%伤害），攻击+20%', effect: { buffSelf: { dodge: 0.3, counterDmg: 1.3, atk: 0.2, turns: 3 } } }
             },
-            unlock: { type: 'legend' }
+            unlock: { type: 'legend', chapter: 6 }
         },
-        huangzhong: {
-            id: 'huangzhong', name: '黄忠', avatar: '🏹', faction: '蜀',
-            weapon: 'gong', growth: 'shenshe', recruitLevel: 25,
-            str: 8, agi: 11, vit: 7, luk: 9,
+        zhugeliang: {
+            id: 'zhugeliang', name: '诸葛亮', avatar: '🔥', faction: '蜀',
+            weapon: 'gong', growth: 'qimen', recruitLevel: 25,
+            str: 6, agi: 9, vit: 6, luk: 11,
             skills: {
-                s1: { name: '连珠', type: 'skill', cost: 20, cd: 2, desc: '4箭，每箭70%伤害', effect: { arrows: 4, dmg: 0.7 } },
-                s2: { name: '狙心', type: 'skill', cost: 25, cd: 3, desc: '后排150%伤害，50%禁疗', effect: { backDmg: 1.5, antiHeal: 0.5 } },
-                ult: { name: '百步穿杨', type: 'ult', desc: '锁定最低血量，350%必暴', effect: { snipe: true, dmg: 3.5, crit: 1 } }
+                s1: { name: '火攻', type: 'skill', cost: 30, cd: 3, desc: '对敌方最前一排造成135%火属性伤害，有35%概率使目标灼烧（每回合损失5%最大生命，持续2回合）', effect: { frontDmg: 1.35, element: 'fire', burnChance: 0.35, burnDmg: 0.05, burnTurns: 2 } },
+                s2: { name: '八卦阵', type: 'skill', cost: 35, cd: 5, desc: '给我方全体增加15%闪避和10%速度，持续2回合；我方闪避成功后，攻击者受到50%反弹伤害', effect: { buffTeam: { dodge: 0.15, speed: 0.1, turns: 2 }, dodgeReflect: 0.5 } },
+                s3: { name: '观星', type: 'skill', cost: 25, cd: 4, desc: '本回合不行动，下回合开始时，给我方被集火目标增加30%防御，持续1回合', effect: { skipTurn: true, nextTurnBuffFocused: { def: 0.3, turns: 1 } } },
+                ult: { name: '东风破', type: 'ult', desc: '对敌方全体造成230%火属性伤害，必定使目标灼烧；若目标已有灼烧状态，则立即结算剩余灼烧伤害并刷新灼烧', effect: { allDmg: 2.3, element: 'fire', forceBurn: true, burnSnap: true } }
             },
-            unlock: { type: 'legend' }
-        },
-        machao: {
-            id: 'machao', name: '马超', avatar: '🐴', faction: '蜀',
-            weapon: 'qiang', growth: 'youlong', recruitLevel: 25,
-            str: 10, agi: 12, vit: 6, luk: 7,
-            skills: {
-                s1: { name: '铁骑', type: 'skill', cost: 20, cd: 3, desc: '冲锋250%伤害', effect: { chargeDmg: 2.5 } },
-                s2: { name: '狂狮', type: 'skill', cost: 30, cd: 4, desc: '攻击+40%，暴击+20%', effect: { selfBuff: { atk: 0.4, crit: 0.2, turns: 3 } } },
-                ult: { name: '西凉风暴', type: 'ult', desc: '十字300%伤害，自身提速', effect: { aoe: 'cross', dmg: 3.0, selfBuff: { speed: 0.3, turns: 2 } } }
-            },
-            unlock: { type: 'legend' }
-        },
-        zhangliao: {
-            id: 'zhangliao', name: '张辽', avatar: '⚔️', faction: '魏',
-            weapon: 'qiang', growth: 'youlong', recruitLevel: 25,
-            str: 10, agi: 11, vit: 7, luk: 7,
-            skills: {
-                s1: { name: '突袭', type: 'skill', cost: 20, cd: 2, desc: '200%伤害，首回合必中', effect: { dmg: 2.0, firstHit: true } },
-                s2: { name: '威震', type: 'skill', cost: 25, cd: 3, desc: '降低敌方全体速度', effect: { debuffSpeed: 0.2 } },
-                ult: { name: '逍遥津破', type: 'ult', desc: '穿透400%伤害，恐惧效果', effect: { pierceDmg: 4.0, fear: true } }
-            },
-            unlock: { type: 'legend' }
+            unlock: { type: 'legend', chapter: 6 }
         },
         zhouyu: {
             id: 'zhouyu', name: '周瑜', avatar: '🔥', faction: '吴',
             weapon: 'jian', growth: 'qimen', recruitLevel: 25,
             str: 6, agi: 9, vit: 6, luk: 10,
             skills: {
-                s1: { name: '火攻', type: 'skill', cost: 30, cd: 3, desc: '范围燃烧3回合', effect: { burn: { dmg: 0.05, turns: 3 } } },
-                s2: { name: '反间', type: 'skill', cost: 25, cd: 4, desc: '让敌人攻击队友', effect: { confuse: 1 } },
-                ult: { name: '赤壁业火', type: 'ult', desc: '全体300%火伤+燃烧', effect: { allDmg: 3.0, burnAll: { dmg: 0.08, turns: 3 } } }
+                s1: { name: '烽火连城', type: 'skill', cost: 30, cd: 3, desc: '对单体造成150%火属性伤害，给目标施加「火种」（受到火属性伤害时额外损失8%最大生命，持续2回合）', effect: { dmg: 1.5, element: 'fire', applyMark: { id: 'huozhong', fireExtraDmg: 0.08, turns: 2 } } },
+                s2: { name: '反间', type: 'skill', cost: 25, cd: 4, desc: '对单体造成100%伤害，有40%概率使目标混乱1回合；若目标已有火种，混乱概率提升至70%', effect: { dmg: 1.0, confuseChance: 0.4, turns: 1, markBonusConfuse: 0.7, markId: 'huozhong' } },
+                s3: { name: '雅音', type: 'skill', cost: 30, cd: 4, desc: '给我方全体回复8%最大内力，并提高10%火属性伤害，持续2回合', effect: { healMpAll: 0.08, buffTeamFireDmg: { val: 0.1, turns: 2 } } },
+                ult: { name: '赤壁烈焰', type: 'ult', desc: '对敌方全体造成210%火属性伤害，所有火属性伤害提升50%，持续2回合；若有目标带有火种，则该目标本次伤害无视防御', effect: { allDmg: 2.1, element: 'fire', buffTeamFireDmg: { val: 0.5, turns: 2 }, markPierce: true, markId: 'huozhong' } }
             },
-            unlock: { type: 'legend' }
-        },
-        taishici: {
-            id: 'taishici', name: '太史慈', avatar: '🏹', faction: '吴',
-            weapon: 'gong', growth: 'shenshe', recruitLevel: 25,
-            str: 9, agi: 11, vit: 7, luk: 8,
-            skills: {
-                s1: { name: '神射', type: 'skill', cost: 20, cd: 2, desc: '200%精准射击', effect: { dmg: 2.0, hit: 1 } },
-                s2: { name: '信义', type: 'skill', cost: 25, cd: 3, desc: '攻击+吸血', effect: { dmg: 1.5, drain: 0.2 } },
-                ult: { name: '天义破空', type: 'ult', desc: '穿透3箭，每箭150%', effect: { pierceArrows: 3, dmg: 1.5 } }
-            },
-            unlock: { type: 'legend' }
+            unlock: { type: 'legend', chapter: 6 }
         },
 
-        // --- 第五章解锁（30级） ---
-        ganning: {
-            id: 'ganning', name: '甘宁', avatar: '🔔', faction: '吴',
-            weapon: 'gong', growth: 'youlong', recruitLevel: 30,
-            str: 9, agi: 12, vit: 6, luk: 8,
+        // --- 第七章传说任务：黄忠 ---
+        huangzhong: {
+            id: 'huangzhong', name: '黄忠', avatar: '🏹', faction: '蜀',
+            weapon: 'gong', growth: 'shenshe', recruitLevel: 28,
+            str: 8, agi: 11, vit: 7, luk: 9,
             skills: {
-                s1: { name: '铃响', type: 'skill', cost: 20, cd: 2, desc: '攻击后提升速度', effect: { dmg: 1.5, selfBuff: { speed: 0.2, turns: 2 } } },
-                s2: { name: '劫营', type: 'skill', cost: 25, cd: 3, desc: '偷袭后排200%伤害', effect: { backstab: 2.0 } },
-                ult: { name: '百骑劫寨', type: 'ult', desc: '随机6箭，每箭100%', effect: { randomArrows: 6, dmg: 1.0 } }
+                s1: { name: '百步穿杨', type: 'skill', cost: 30, cd: 3, desc: '对敌方生命最低的目标造成170%伤害；若目标生命低于30%，本次攻击暴击率+50%', effect: { snipeLowestHp: { dmg: 1.7, lowHpThreshold: 0.3, bonusCrit: 0.5 } } },
+                s2: { name: '凝神一击', type: 'skill', cost: 20, cd: 2, desc: '本回合不行动，下回合首次攻击伤害+80%，暴击率+30%，且无视目标闪避', effect: { skipTurn: true, nextAtkBuff: { dmgBoost: 0.8, crit: 0.3, ignoreDodge: true } } },
+                s3: { name: '老兵不死', type: 'skill', cost: 25, cd: 4, desc: '自身暴击伤害提升25%，持续3回合；若本次攻击暴击，有30%概率不进入冷却', effect: { selfBuff: { critDmg: 0.25, turns: 3 }, critNoCdChance: 0.3 } },
+                ult: { name: '定军山神箭', type: 'ult', desc: '对敌方单体造成360%伤害，必定暴击，无视闪避；若击杀目标，我方全体攻击+15%，持续2回合', effect: { dmg: 3.6, forceCrit: true, ignoreDodge: true, killTeamBuff: { atk: 0.15, turns: 2 } } }
             },
-            unlock: { type: 'story', chapter: 5, stage: 10 }
+            unlock: { type: 'legend', chapter: 7 }
+        },
+        machao: {
+            id: 'machao', name: '马超', avatar: '🐴', faction: '蜀',
+            weapon: 'qiang', growth: 'youlong', recruitLevel: 28,
+            str: 10, agi: 12, vit: 6, luk: 7,
+            skills: {
+                s1: { name: '铁骑冲阵', type: 'skill', cost: 30, cd: 3, desc: '对敌方最前一排造成145%伤害，有30%概率击退目标', effect: { frontDmg: 1.45, knockbackChance: 0.3 } },
+                s2: { name: '西凉烈枪', type: 'skill', cost: 30, cd: 4, desc: '对单体造成2次攻击，每次90%伤害；若目标被击退过，则每次伤害提升至130%', effect: { hits: 2, dmg: 0.9, knockedBonusDmg: 1.3 } },
+                s3: { name: '骑术精通', type: 'skill', cost: 25, cd: 5, desc: '自身速度提升25%，持续3回合；期间每次行动后，有20%概率额外行动1次', effect: { selfBuff: { speed: 0.25, turns: 3 }, extraActionChance: 0.2 } },
+                ult: { name: '神威天将', type: 'ult', desc: '对敌方单体造成5次攻击，每次75%伤害；每次攻击有20%概率暴击，暴击时伤害翻倍且无视防御', effect: { hits: 5, dmg: 0.75, perHitCritChance: 0.2, critDoubleDmg: true, critPierce: true } }
+            },
+            unlock: { type: 'legend', chapter: 7 }
         },
 
-        // --- 特殊武将 ---
-        diaochan: {
-            id: 'diaochan', name: '貂蝉', avatar: '🌸', faction: '群雄',
-            weapon: 'jian', growth: 'jiyun', recruitLevel: 35,
-            str: 5, agi: 10, vit: 5, luk: 13,
+        // --- 第八章传说任务：司马懿 ---
+        simayi: {
+            id: 'simayi', name: '司马懿', avatar: '🦊', faction: '魏',
+            weapon: 'jian', growth: 'qimen', recruitLevel: 30,
+            str: 7, agi: 9, vit: 7, luk: 10,
             skills: {
-                s1: { name: '闭月', type: 'skill', cost: 20, cd: 3, desc: '魅惑1人攻击队友', effect: { charm: 1 } },
-                s2: { name: '离间', type: 'skill', cost: 25, cd: 4, desc: '敌方2人互相攻击', effect: { turncoat: 2 } },
-                ult: { name: '倾城之舞', type: 'ult', desc: '全体混乱+伤害', effect: { confuseAll: true, dmg: 2.0 } }
+                s1: { name: '鬼才', type: 'skill', cost: 25, cd: 3, desc: '对单体造成140%伤害，有35%概率使目标沉默1回合', effect: { dmg: 1.4, silenceChance: 0.35, turns: 1 } },
+                s2: { name: '狼顾', type: 'skill', cost: 25, cd: 4, desc: '自身闪避+15%，持续2回合；每次闪避后，下一次攻击伤害+30%', effect: { selfBuff: { dodge: 0.15, turns: 2 }, dodgeNextDmgBonus: 0.3 } },
+                s3: { name: '鹰视', type: 'skill', cost: 30, cd: 4, desc: '查看敌方全体当前内力值，并给内力最高的敌方单位施加「摄魂」（每回合损失8%最大内力，持续2回合）', effect: { revealMp: true, debuffHighestMp: { mpDrain: 0.08, turns: 2 } } },
+                ult: { name: '冢虎之谋', type: 'ult', desc: '对敌方全体造成200%伤害，有40%概率使目标沉默1回合；若目标已有沉默，则延长1回合并造成额外100%伤害', effect: { allDmg: 2.0, silenceChance: 0.4, turns: 1, extendSilenceBonusDmg: 1.0 } }
             },
-            unlock: { type: 'special' }
+            unlock: { type: 'legend', chapter: 8 }
         },
+
+        // --- 特殊/隐藏武将 ---
         lvbu: {
             id: 'lvbu', name: '吕布', avatar: '👹', faction: '群雄',
             weapon: 'qiang', growth: 'mengjiang', recruitLevel: 40,
             str: 15, agi: 9, vit: 9, luk: 5,
             skills: {
-                s1: { name: '无双', type: 'skill', cost: 30, cd: 3, desc: '攻击+50%', effect: { selfBuff: { atk: 0.5, turns: 2 } } },
-                s2: { name: '乱舞', type: 'skill', cost: 35, cd: 4, desc: '随机攻击4次', effect: { randomHits: 4, dmg: 1.2 } },
-                ult: { name: '鬼神降临', type: 'ult', desc: '单体500%伤害，斩杀线30%', effect: { dmg: 5.0, execute: 0.3 } }
+                s1: { name: '无双乱舞', type: 'skill', cost: 30, cd: 3, desc: '对随机3个敌方目标各造成115%伤害；若只有一个敌方目标，则对该目标造成330%伤害', effect: { randomHits: 3, dmg: 1.15, singleTargetBonus: 3.3 } },
+                s2: { name: '魔神降世', type: 'skill', cost: 35, cd: 5, desc: '自身攻击+30%，防御-15%，持续3回合；期间每次击杀敌方单位，延长1回合', effect: { selfBuff: { atk: 0.3, def: -0.15, turns: 3 }, killExtend: 1 } },
+                s3: { name: '辕门射戟', type: 'skill', cost: 30, cd: 4, desc: '对敌方后排单体造成180%伤害，无视其前排保护，有30%概率使其沉默1回合', effect: { backDmg: 1.8, ignoreFront: true, silenceChance: 0.3, turns: 1 } },
+                ult: { name: '鬼神破灭', type: 'ult', desc: '对敌方单体造成420%伤害，无视40%防御；若目标生命高于50%，额外造成目标最大生命15%的真实伤害', effect: { dmg: 4.2, pierceDef: 0.4, highHpTrueDmg: { threshold: 0.5, hpPct: 0.15 } } }
             },
             unlock: { type: 'hidden' }
         }
