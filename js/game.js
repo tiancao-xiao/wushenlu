@@ -1020,6 +1020,53 @@ var Game = {
         var typeName = isUlt ? '奥义' : '技能';
         UI.showModal('领悟成功', '你研读了「' + miji.name + '」，领悟了' + typeName + '「' + skillData.name + '」！');
         if (Game.currentScreen === 'bag') UI.renderBag();
+    },
+
+    // 招募武将入队
+    recruitHero: function(heroId) {
+        // 检查是否已在队伍中
+        for (var i = 0; i < this.state.team.length; i++) {
+            if (this.state.team[i].id === heroId) {
+                UI.showModal('提示', '该武将已在队伍中！');
+                return;
+            }
+        }
+        // 检查是否已解锁过
+        var alreadyUnlocked = false;
+        for (var j = 0; j < this.state.unlockedHeroes.length; j++) {
+            if (this.state.unlockedHeroes[j] === heroId) {
+                alreadyUnlocked = true;
+                break;
+            }
+        }
+        if (alreadyUnlocked) {
+            UI.showModal('提示', '该武将已经招募过了！');
+            return;
+        }
+
+        var template = GAME_DATA.heroes[heroId];
+        if (!template) {
+            UI.showModal('错误', '武将数据不存在！');
+            return;
+        }
+
+        var newHero = createUnit(template, template.recruitLevel || 5);
+        // 给武将装备默认武器
+        if (template.weapon) {
+            var wId = template.weapon + '_tie';
+            if (GAME_DATA.baseWeapons[wId]) {
+                newHero.equip = { weapon: copyObj(GAME_DATA.baseWeapons[wId]) };
+            }
+        }
+        // 设置默认阵位
+        var defaultPos = { x: 2, y: 2 };
+        if (!this.state.teamPositions) this.state.teamPositions = {};
+        this.state.teamPositions[heroId] = defaultPos;
+
+        this.state.team.push(newHero);
+        this.state.unlockedHeroes.push(heroId);
+        this.saveGame();
+        UI.showModal('武将入队', '<b>' + newHero.name + '</b> 加入了你的队伍！<br><br>今后并肩作战吧！');
     }
 };
 

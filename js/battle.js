@@ -57,9 +57,9 @@ var Battle = {
         // Boss阶段第三场：同时出场多个敌人（如张梁+张宝+张角）
         if (options.bossPhaseEnemies && options.bossPhaseEnemies.length > 1) {
             var bossSlots = [
-                { x: 1, y: 0 },  // 前排
-                { x: 1, y: 1 },  // 中排
-                { x: 1, y: 2 }   // 后排
+                { x: 1, y: 2 },  // 张梁 - 前排（最下）
+                { x: 1, y: 1 },  // 张宝 - 中排
+                { x: 1, y: 0 }   // 张角 - 后排（最上）
             ];
             for (var tj = 0; tj < options.bossPhaseEnemies.length; tj++) {
                 var e = GAME_DATA.enemies[options.bossPhaseEnemies[tj]];

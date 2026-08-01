@@ -654,8 +654,8 @@ var GAME_DATA = {
                 '0,1': { type: 'empty', icon: '⬜', desc: '荒凉的村庄，空无一人。' },
                 '1,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '黄巾卒正在搜查残屋！' },
                 '2,1': { type: 'empty', icon: '⬜', desc: '一片竹林，风吹过沙沙作响。' },
-                // (3,1) 和 (4,1) 不定义 = 不可通行区域（障碍）
-                // (5,1) 定义但 blockedDirs 控制不能下到 (5,0)
+                '3,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '黄巾兵的暗哨！', blockedDirs: ['down'] },
+                '4,1': { type: 'npc', icon: '👤', npc: 'liaohua', npcName: '廖化', desc: '一名义军小将正被黄巾兵围困，急需救援！', dialog: '多谢壮士相救！我乃义军廖化，愿随壮士共讨黄巾！', blockedDirs: ['down'] },
                 '5,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 4, desc: '黄巾兵重重包围！', blockedDirs: ['down'] },
 
                 // 第六行 y=0（最下排，boss区域）

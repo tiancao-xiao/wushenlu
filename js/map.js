@@ -127,7 +127,7 @@ var Map = {
         var defeated = Game.state.defeatedCells;
 
         var html = '<div style="display:grid;grid-template-columns:repeat(' + w + ',40px);gap:4px;margin-bottom:12px;">';
-        for (var y = 0; y < h; y++) {
+        for (var y = h - 1; y >= 0; y--) {
             for (var x = 0; x < w; x++) {
                 var key = x + ',' + y;
                 var cell = chapter.cells[key];
@@ -189,8 +189,8 @@ var Map = {
         var defeated = Game.state.defeatedCells;
 
         var dirs = [
-            { key: 'up',    dx: 0,  dy: -1, label: '⬆️ 上' },
-            { key: 'down',  dx: 0,  dy: 1,  label: '⬇️ 下' },
+            { key: 'up',    dx: 0,  dy: 1,  label: '⬆️ 上' },
+            { key: 'down',  dx: 0,  dy: -1, label: '⬇️ 下' },
             { key: 'left',  dx: -1, dy: 0,  label: '⬅️ 左' },
             { key: 'right', dx: 1,  dy: 0,  label: '➡️ 右' }
         ];
@@ -236,6 +236,13 @@ var Map = {
         var ncell = chapter.cells[key];
         var inBounds = nx >= 0 && nx < chapter.width && ny >= 0 && ny < chapter.height;
 
+        // 检查当前格子是否有方向封锁——封锁方向不显示目标单元格
+        var curKey = pos.x + ',' + pos.y;
+        var curCell = chapter.cells[curKey];
+        if (curCell && curCell.blockedDirs && curCell.blockedDirs.indexOf(dir.key) !== -1) {
+            return '<div style="width:56px;height:56px;"></div>';
+        }
+
         if (!inBounds || !ncell) {
             return '<div style="width:56px;height:56px;"></div>';
         }
@@ -258,8 +265,8 @@ var Map = {
     moveDir: function(dirKey, chapter) {
         var pos = Game.state.currentPos;
         var dx = 0, dy = 0;
-        if (dirKey === 'up') dy = -1;
-        else if (dirKey === 'down') dy = 1;
+        if (dirKey === 'up') dy = 1;
+        else if (dirKey === 'down') dy = -1;
         else if (dirKey === 'left') dx = -1;
         else if (dirKey === 'right') dx = 1;
 
@@ -593,6 +600,36 @@ var Map = {
             }
         }
 
+        // 廖化招募
+        if (cell.npc === 'liaohua') {
+            var hasLiaohua = false;
+            for (var lh = 0; lh < Game.state.team.length; lh++) {
+                if (Game.state.team[lh].id === 'liaohua') { hasLiaohua = true; break; }
+            }
+            if (!hasLiaohua) {
+                buttons += '<button onclick="UI.closeModal();Game.recruitHero(' + "'" + 'liaohua' + "'" + ')">🤝 邀请廖化入队</button>';
+            } else {
+                buttons += '<button disabled>廖化已在队伍中</button>';
+            }
+        }
+
+        // 刘备复命：最终决战完成后招募张翼
+        if (cell.npc === 'liubei') {
+            var bossKey = '5,0';
+            var bossPhase = Game.state.bossPhaseStates[bossKey] || 0;
+            var allCleared = bossPhase >= 3; // phases.length=3, 全部击败后>=3
+            var hasZhangyi = false;
+            for (var zy = 0; zy < Game.state.team.length; zy++) {
+                if (Game.state.team[zy].id === 'zhangyi') { hasZhangyi = true; break; }
+            }
+            if (allCleared && !hasZhangyi) {
+                buttons += '<button onclick="UI.closeModal();Game.recruitHero(' + "'" + 'zhangyi' + "'" + ')">🎖️ 向刘备复命，招募张翼入队</button>';
+            } else if (allCleared && hasZhangyi) {
+                buttons += '<button disabled>张翼已在队伍中</button>';
+            } else {
+                buttons += '<button disabled>请先击败张梁、张宝、张角</button>';
+            }
+        }
         buttons += '</div>';
 
         UI.showModal(npcName, content + '<br><br>' + buttons);
