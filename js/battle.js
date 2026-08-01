@@ -53,38 +53,95 @@ var Battle = {
 
         // --- 敌方单位 ---
         var enemyUnits = [];
-        for (var j = 0; j < count; j++) {
-            var e = GAME_DATA.enemies[enemyTemplate];
-            if (!e) continue;
-            var scale = options.scale || 1;
-            var ehp = Math.floor(e.hp * scale * (1 + Game.state.chapter * 0.1));
-            var eatk = Math.floor(e.atk * scale * (1 + Game.state.chapter * 0.05));
-            var eu = {};
-            for (var ek in e) {
-                if (e.hasOwnProperty(ek)) eu[ek] = e[ek];
-            }
-            eu._index = j;
-            eu._side = 'enemy';
-            eu._maxHp = ehp;
-            eu._hp = ehp;
-            eu._atk = eatk;
-            eu._def = e.def;
-            eu._spd = e.spd;
-            eu._crit = 5;
-            eu._dodge = 3;
-            eu._ult = 0;
-            eu._dead = false;
-            eu._buffs = [];
-            eu._debuffs = [];
-            eu._battleSkills = [
-                { name: '猛击', cost: 20, cd: 3, dmg: 1.5 },
-                { name: '重击', cost: 30, cd: 4, dmg: 2.2 }
+        // 三连战第三场：同时出场三个boss
+        if (options.tripleBoss && options.bosses && options.triplePhase === 2) {
+            var tripleSlots = [
+                { x: 1, y: 0 },  // 张梁 - 前排
+                { x: 1, y: 1 },  // 张宝 - 中排
+                { x: 1, y: 2 }   // 张角 - 后排
             ];
-            eu._skillCd = [0, 0];
-            eu._canUseUlt = true;
-            eu.id = enemyTemplate;
-            eu._pos = this.getEnemyPos(j, count);
-            enemyUnits.push(eu);
+            for (var tj = 0; tj < options.bosses.length; tj++) {
+                var e = GAME_DATA.enemies[options.bosses[tj]];
+                if (!e) continue;
+                var scale = options.scale || 1;
+                var ehp = Math.floor(e.hp * scale * (1 + Game.state.chapter * 0.1));
+                var eatk = Math.floor(e.atk * scale * (1 + Game.state.chapter * 0.05));
+                var eu = {};
+                for (var ek in e) {
+                    if (e.hasOwnProperty(ek)) eu[ek] = e[ek];
+                }
+                eu._index = tj;
+                eu._side = 'enemy';
+                eu._maxHp = ehp;
+                eu._hp = ehp;
+                eu._atk = eatk;
+                eu._def = e.def;
+                eu._spd = e.spd;
+                eu._crit = 5;
+                eu._dodge = 3;
+                eu._ult = 0;
+                eu._dead = false;
+                eu._buffs = [];
+                eu._debuffs = [];
+                // Boss使用配置的技能
+                if (e.skills) {
+                    eu._battleSkills = [];
+                    for (var ski = 0; ski < e.skills.length; ski++) {
+                        eu._battleSkills.push(e.skills[ski]);
+                    }
+                } else {
+                    eu._battleSkills = [
+                        { name: '猛击', cost: 20, cd: 3, dmg: 1.5 },
+                        { name: '重击', cost: 30, cd: 4, dmg: 2.2 }
+                    ];
+                }
+                eu._skillCd = [0, 0];
+                eu._canUseUlt = true;
+                eu.id = options.bosses[tj];
+                eu._pos = tripleSlots[tj] || { x: 1, y: 1 };
+                enemyUnits.push(eu);
+            }
+        } else {
+            for (var j = 0; j < count; j++) {
+                var e = GAME_DATA.enemies[enemyTemplate];
+                if (!e) continue;
+                var scale = options.scale || 1;
+                var ehp = Math.floor(e.hp * scale * (1 + Game.state.chapter * 0.1));
+                var eatk = Math.floor(e.atk * scale * (1 + Game.state.chapter * 0.05));
+                var eu = {};
+                for (var ek in e) {
+                    if (e.hasOwnProperty(ek)) eu[ek] = e[ek];
+                }
+                eu._index = j;
+                eu._side = 'enemy';
+                eu._maxHp = ehp;
+                eu._hp = ehp;
+                eu._atk = eatk;
+                eu._def = e.def;
+                eu._spd = e.spd;
+                eu._crit = 5;
+                eu._dodge = 3;
+                eu._ult = 0;
+                eu._dead = false;
+                eu._buffs = [];
+                eu._debuffs = [];
+                if (e.skills) {
+                    eu._battleSkills = [];
+                    for (var ski = 0; ski < e.skills.length; ski++) {
+                        eu._battleSkills.push(e.skills[ski]);
+                    }
+                } else {
+                    eu._battleSkills = [
+                        { name: '猛击', cost: 20, cd: 3, dmg: 1.5 },
+                        { name: '重击', cost: 30, cd: 4, dmg: 2.2 }
+                    ];
+                }
+                eu._skillCd = [0, 0];
+                eu._canUseUlt = true;
+                eu.id = enemyTemplate;
+                eu._pos = this.getEnemyPos(j, count);
+                enemyUnits.push(eu);
+            }
         }
 
         var allUnits = [];
@@ -103,7 +160,8 @@ var Battle = {
             result: null,
             log: [],
             options: options,
-            floatingTexts: []
+            floatingTexts: [],
+            triplePhase: options.triplePhase || 0
         };
 
         this.calcActionOrder();
@@ -588,6 +646,11 @@ var Battle = {
             return true;
         }
         if (aliveEnemy.length === 0) {
+            // 三连战：第一场或第二场胜利后，进入下一场
+            if (s.options.tripleBoss && s.triplePhase < 2) {
+                this.startNextTriplePhase();
+                return true;
+            }
             s.result = 'win';
             this.showResult();
             return true;
@@ -600,6 +663,40 @@ var Battle = {
         return false;
     },
 
+    // 三连战：进入下一场战斗
+    startNextTriplePhase: function() {
+        var s = this.state;
+        if (!s.options.tripleBoss || !s.options.bosses) return;
+        var nextPhase = s.triplePhase + 1;
+        var nextEnemy = s.options.bosses[nextPhase];
+
+        // 显示过渡提示
+        var bossNames = ['张梁', '张宝', '张角'];
+        var msgs = [
+            '张梁被击败，但张宝现身了！',
+            '张宝被击败，但张角降临了！',
+            ''
+        ];
+
+        if (nextPhase === 1) {
+            UI.showModal('战斗继续', '张梁被击败，但张宝现身了！<br><br>第二场战斗即将开始！');
+        } else if (nextPhase === 2) {
+            UI.showModal('最终决战', '张宝被击败，但张角降临了！<br><br>张梁、张宝、张角同时出手——最终决战！');
+        }
+
+        // 延迟后开始下一场
+        setTimeout(function() {
+            var newOptions = {
+                cellKey: s.options.cellKey,
+                tripleBoss: true,
+                bosses: s.options.bosses,
+                reward: s.options.reward,
+                triplePhase: nextPhase
+            };
+            Battle.start(nextEnemy, 1, newOptions);
+        }, 1500);
+    },
+
     showResult: function() {
         var s = this.state;
         var isWin = s.result === 'win';
@@ -609,11 +706,23 @@ var Battle = {
         var rewardsHtml = '';
         if (isWin && s.options.reward) {
             var r = s.options.reward;
-            rewardsHtml += '<div class="reward-item">💰 银两 +' + (r.silver || 0) + '</div>';
-            rewardsHtml += '<div class="reward-item">⭐ 经验 +' + (r.exp || 0) + '</div>';
-            if (r.items) {
-                for (var i = 0; i < r.items.length; i++) {
-                    rewardsHtml += '<div class="reward-item">📦 ' + r.items[i] + '</div>';
+            // 三连战：只有最后一场才发全部奖励，前两场发部分奖励
+            if (s.options.tripleBoss) {
+                var phaseReward = s.triplePhase === 2 ? 1.0 : (s.triplePhase === 1 ? 0.3 : 0.15);
+                rewardsHtml += '<div class="reward-item">💰 银两 +' + Math.floor((r.silver || 0) * phaseReward) + '</div>';
+                rewardsHtml += '<div class="reward-item">⭐ 经验 +' + Math.floor((r.exp || 0) * phaseReward) + '</div>';
+                if (r.items && s.triplePhase === 2) {
+                    for (var i = 0; i < r.items.length; i++) {
+                        rewardsHtml += '<div class="reward-item">📦 ' + r.items[i] + '</div>';
+                    }
+                }
+            } else {
+                rewardsHtml += '<div class="reward-item">💰 银两 +' + (r.silver || 0) + '</div>';
+                rewardsHtml += '<div class="reward-item">⭐ 经验 +' + (r.exp || 0) + '</div>';
+                if (r.items) {
+                    for (var i = 0; i < r.items.length; i++) {
+                        rewardsHtml += '<div class="reward-item">📦 ' + r.items[i] + '</div>';
+                    }
                 }
             }
         } else if (isWin) {
@@ -643,11 +752,14 @@ var Battle = {
                 Game.trackKill(enemy.id, killCount);
             }
 
-            for (var i = 0; i < Game.state.team.length; i++) {
-                var u = Game.state.team[i];
-                if (!u._dead) Game.gainExp(u, exp);
+            // 三连战经验在每场战斗结束时通过showResult发放
+            if (!this.state.options.tripleBoss) {
+                for (var i = 0; i < Game.state.team.length; i++) {
+                    var u = Game.state.team[i];
+                    if (!u._dead) Game.gainExp(u, exp);
+                }
+                Game.addSilver(silver);
             }
-            Game.addSilver(silver);
         }
 
 

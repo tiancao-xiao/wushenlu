@@ -259,6 +259,16 @@ var Map = {
             return;
         }
 
+        // 检查当前格子是否有方向封锁
+        var curKey = pos.x + ',' + pos.y;
+        var curCell = chapter.cells[curKey];
+        if (curCell && curCell.blockedDirs) {
+            if (curCell.blockedDirs.indexOf(dirKey) !== -1) {
+                UI.showModal('提示', '此路不通！');
+                return;
+            }
+        }
+
         // 检查当前格子是否有未击败的怪——如果有，必须先击败才能离开
         var curKey = pos.x + ',' + pos.y;
         var curCell = chapter.cells[curKey];
@@ -393,6 +403,30 @@ var Map = {
         if (cell.special) options.survive = cell.special.survive;
 
         Battle.start(cell.enemy, 1, options);
+    },
+
+    // Boss三连战（第一章张梁→张宝→张角）
+    startTripleBossBattle: function() {
+        var chapter = null;
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            if (GAME_DATA.chapters[i].id === Game.state.currentChapter) {
+                chapter = GAME_DATA.chapters[i];
+                break;
+            }
+        }
+        if (!chapter) return;
+        var pos = Game.state.currentPos;
+        var cell = chapter.cells[pos.x + ',' + pos.y];
+        if (!cell || !cell.bosses || cell.bosses.length < 3) return;
+
+        var options = {
+            cellKey: pos.x + ',' + pos.y,
+            tripleBoss: true,
+            bosses: cell.bosses,
+            reward: cell.reward
+        };
+
+        Battle.start(cell.bosses[0], 1, options);
     },
 
     markDefeated: function(cellKey) {

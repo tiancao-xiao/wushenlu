@@ -397,7 +397,27 @@ var GAME_DATA = {
         boss_caren: { name: '曹仁', avatar: '🛡️', hp: 1400, atk: 62, def: 40, spd: 12, exp: 600, silver: 1100, drops: ['xuan_tie', 'jingtie'], isBoss: true },
         boss_lvmeng: { name: '吕蒙', avatar: '📖', hp: 1350, atk: 66, def: 34, spd: 20, exp: 600, silver: 1100, drops: ['yuntie', 'miji_canyi'], isBoss: true },
         boss_luxun: { name: '陆逊', avatar: '🔥', hp: 1500, atk: 70, def: 36, spd: 22, exp: 700, silver: 1300, drops: ['yuntie', 'lingzhi'], isBoss: true },
-        boss_zhangjiao: { name: '张角', avatar: '⚡', hp: 600, atk: 40, def: 20, spd: 15, exp: 300, silver: 500, drops: ['renshen', 'miji_canyi'], isBoss: true },
+        boss_zhangliang: { name: '张梁', avatar: '🔥', hp: 450, atk: 32, def: 16, spd: 12, exp: 200, silver: 300, drops: ['jingtie', 'caoyao'], isBoss: true,
+            skills: [
+                { name: '妖火咒', cost: 25, cd: 3, dmg: 1.6, desc: '对单体造成160%伤害，30%概率灼烧（每回合损失5%生命，持续2回合）' },
+                { name: '地裂术', cost: 30, cd: 4, dmg: 1.3, desc: '对最前一排造成130%伤害' }
+            ],
+            ult: { name: '太平烈焰', cost: 50, dmg: 2.0, desc: '对敌方全体造成200%火属性伤害，降低全体10%防御，持续2回合' }
+        },
+        boss_zhangbao: { name: '张宝', avatar: '❄️', hp: 500, atk: 35, def: 18, spd: 14, exp: 250, silver: 400, drops: ['xuan_tie', 'caoyao'], isBoss: true,
+            skills: [
+                { name: '冰封咒', cost: 25, cd: 3, dmg: 1.5, desc: '对单体造成150%伤害，20%概率冰冻（无法行动1回合）' },
+                { name: '寒霜袭', cost: 30, cd: 4, dmg: 1.2, desc: '对随机2个目标造成120%冰属性伤害，降低目标15%速度，持续2回合' }
+            ],
+            ult: { name: '玄冰风暴', cost: 50, dmg: 1.8, desc: '对敌方全体造成180%冰属性伤害，30%概率冰冻1回合' }
+        },
+        boss_zhangjiao: { name: '张角', avatar: '⚡', hp: 600, atk: 40, def: 20, spd: 15, exp: 300, silver: 500, drops: ['renshen', 'miji_canyi'], isBoss: true,
+            skills: [
+                { name: '五雷轰顶', cost: 25, cd: 3, dmg: 1.7, desc: '对单体造成170%雷属性伤害，无视20%防御' },
+                { name: '天公护体', cost: 30, cd: 5, dmg: 0, desc: '自身获得护盾（吸收30%最大生命值伤害），持续2回合' }
+            ],
+            ult: { name: '苍天已死', cost: 60, dmg: 2.2, desc: '对敌方全体造成220%雷属性伤害，降低全体20%攻击，持续2回合' }
+        },
         boss_huaxiong: { name: '华雄', avatar: '🐗', hp: 720, atk: 50, def: 26, spd: 12, exp: 350, silver: 600, drops: ['xuan_tie', 'miji_canyi'], isBoss: true },
         boss_lvbu_first: { name: '吕布', avatar: '👹', hp: 2500, atk: 90, def: 45, spd: 25, exp: 1000, silver: 1500, drops: ['yuntie'], isBoss: true }
     },
@@ -406,24 +426,59 @@ var GAME_DATA = {
     chapters: [
         {
             id: 1, name: '黄巾之乱', location: '巨鹿',
-            width: 5, height: 5,
-            startPos: { x: 0, y: 2 },
-            exitPos: { x: 4, y: 2 },
+            width: 6, height: 6,
+            startPos: { x: 0, y: 5 },
+            exitPos: { x: 5, y: 0 },
             desc: '天下大乱，黄巾军四起，你从家乡出发，初涉乱世。',
             cells: {
-                '0,2': { type: 'start', icon: '🏠', desc: '起点：你的故乡' },
-                '1,2': { type: 'empty', icon: '⬜', desc: '一片荒野，风沙漫天。' },
-                '1,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '前方有黄巾兵拦路！' },
-                '1,3': { type: 'npc', icon: '👤', npc: 'cunmin_a', npcName: '村民阿福', desc: '一位村民神色慌张，似乎有话要说。', dialog: '壮士！黄巾贼在附近烧杀抢掠，求你出手相助！杀了20个黄巾兵再来找我。' },
-                '2,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '一群黄巾卒挡住了去路。' },
-                '2,1': { type: 'chest', icon: '📦', desc: '发现了一个被遗弃的箱子。', reward: { items: ['tiekuang:3', 'caoyao:2'], silver: 50 } },
-                '2,3': { type: 'battle', icon: '💀', enemy: 'huangjin_xiaoshuai', count: 1, desc: '黄巾小帅率领手下在此设伏！' },
-                '2,0': { type: 'empty', icon: '⬜', desc: '荒凉的村庄，空无一人。' },
-                '3,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾兵的巡逻队！' },
-                '3,1': { type: 'npc', icon: '👤', npc: 'tiejiang', npcName: '老铁匠', desc: '一位老铁匠在废墟中整理工具。', dialog: '小伙子，想打造兵器吗？收集材料来找我。' },
-                '3,3': { type: 'npc', icon: '👤', npc: 'cunmin_b', npcName: '村民阿贵', desc: '一位村民正在采药，却遇到了麻烦。', dialog: '壮士，我最近急需草药治病，你能帮我收集15株草药吗？' },
-                '3,0': { type: 'hidden', icon: '❓', desc: '空气中弥漫着一股神秘的气息...', condition: { fuqi: 8 }, reward: { items: ['chixiao_frag:1'] } },
-                '4,2': { type: 'boss', icon: '👹', enemy: 'boss_zhangjiao', desc: '巨鹿城外，张角正在施法召唤雷霆！', reward: { exp: 500, silver: 1000, unlock: 'guanyu' } }
+                // 第一行 y=5（最上排）
+                '0,5': { type: 'start', icon: '🏠', desc: '起点：巨鹿城郊的村庄' },
+                '1,5': { type: 'empty', icon: '⬜', desc: '荒野小径，杂草丛生。' },
+                '2,5': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '前方有黄巾兵拦路！' },
+                '3,5': { type: 'empty', icon: '⬜', desc: '一片枯树林，阴风阵阵。' },
+                '4,5': { type: 'npc', icon: '👤', npc: 'cunmin_a', npcName: '村民阿福', desc: '一位村民神色慌张，似乎有话要说。', dialog: '壮士！黄巾贼在附近烧杀抢掠，求你出手相助！杀了20个黄巾兵再来找我。' },
+                '5,5': { type: 'chest', icon: '📦', desc: '发现一个被遗弃的补给箱。', reward: { items: ['tiekuang:3', 'caoyao:2'], silver: 50 } },
+
+                // 第二行 y=4
+                '0,4': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '黄巾卒正在搜查村庄！' },
+                '1,4': { type: 'empty', icon: '⬜', desc: '破旧的茅草屋，人去楼空。' },
+                '2,4': { type: 'npc', icon: '👤', npc: 'tiejiang', npcName: '老铁匠', desc: '一位老铁匠在废墟中整理工具。', dialog: '小伙子，想打造兵器吗？收集材料来找我。' },
+                '3,4': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾兵巡逻队正在靠近！' },
+                '4,4': { type: 'empty', icon: '⬜', desc: '干涸的河床，遍布碎石。' },
+                '5,4': { type: 'battle', icon: '💀', enemy: 'huangjin_xiaoshuai', count: 1, desc: '黄巾小帅率领手下在此设伏！' },
+
+                // 第三行 y=3
+                '0,3': { type: 'chest', icon: '📦', desc: '一棵古树下的藏宝箱。', reward: { items: ['jinchuang:2', 'muchai:3'], silver: 80 } },
+                '1,3': { type: 'empty', icon: '⬜', desc: '荒野草地，偶尔有野兔窜过。' },
+                '2,3': { type: 'npc', icon: '👤', npc: 'cunmin_b', npcName: '村民阿贵', desc: '一位村民正在采药，却遇到了麻烦。', dialog: '壮士，我最近急需草药治病，你能帮我收集15株草药吗？' },
+                '3,3': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 3, desc: '一群黄巾卒挡住了去路！' },
+                '4,3': { type: 'empty', icon: '⬜', desc: '废弃的驿站，牌匾歪斜。' },
+                '5,3': { type: 'hidden', icon: '❓', desc: '空气中弥漫着一股神秘的气息...', condition: { fuqi: 8 }, reward: { items: ['chixiao_frag:1'] } },
+
+                // 第四行 y=2
+                '0,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾兵的主力部队！' },
+                '1,2': { type: 'empty', icon: '⬜', desc: '荒芜的农田，庄稼早已枯萎。' },
+                '2,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_xiaoshuai', count: 2, desc: '两名黄巾小帅在此驻守！' },
+                '3,2': { type: 'chest', icon: '📦', desc: '一辆翻倒的粮车，物资散落一地。', reward: { items: ['jingtie:2', 'caoyao:3'], silver: 100 } },
+                '4,2': { type: 'empty', icon: '⬜', desc: '一条蜿蜒的山路，通往黄巾大营。' },
+                '5,2': { type: 'battle', icon: '💀', enemy: 'huangjin_daoshuai', count: 1, desc: '黄巾大帅亲率精锐把守要道！' },
+
+                // 第五行 y=1
+                '0,1': { type: 'empty', icon: '⬜', desc: '荒凉的村庄，空无一人。' },
+                '1,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '黄巾卒正在搜查残屋！' },
+                '2,1': { type: 'empty', icon: '⬜', desc: '一片竹林，风吹过沙沙作响。' },
+                // (3,1) 和 (4,1) 不定义 = 不可通行区域（障碍）
+                // (5,1) 定义但 blockedDirs 控制不能下到 (5,0)
+                '5,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 4, desc: '黄巾兵重重包围！', blockedDirs: ['down'] },
+
+                // 第六行 y=0（最下排，boss区域）
+                '0,0': { type: 'empty', icon: '⬜', desc: '黄巾大营外围，戒备森严。' },
+                '1,0': { type: 'battle', icon: '⚔️', enemy: 'huangjin_xiaoshuai', count: 2, desc: '最后的防线——黄巾小帅拼死抵抗！' },
+                '2,0': { type: 'empty', icon: '⬜', desc: '营门大开，杀声震天。' },
+                '3,0': { type: 'battle', icon: '💀', enemy: 'huangjin_daoshuai', count: 1, desc: '黄巾大帅死守营门！' },
+                '4,0': { type: 'empty', icon: '⬜', desc: '祭坛外围，旌旗猎猎。' },
+                // (5,0) boss关——三连战
+                '5,0': { type: 'boss', icon: '👹', enemy: 'boss_zhangliang', desc: '黄巾祭坛——张梁正在施法！', reward: { exp: 800, silver: 1200 }, bossType: 'triple', bosses: ['boss_zhangliang', 'boss_zhangbao', 'boss_zhangjiao'] }
             }
         },
         {
