@@ -52,6 +52,10 @@ var Game = {
                 if (!this.state.redeemedCodes) {
                     this.state.redeemedCodes = [];
                 }
+                // 兼容旧存档：补充 seenIntro
+                if (this.state.seenIntro === undefined) {
+                    this.state.seenIntro = true; // 旧存档默认已看过
+                }
                 // 兼容旧存档：补充 bossPhaseStates
                 if (!this.state.bossPhaseStates) {
                     this.state.bossPhaseStates = {};
@@ -105,6 +109,48 @@ var Game = {
         if (screenId === 'config') UI.renderConfig();
         if (screenId === 'martial') UI.renderMartial();
     },
+
+    // ===== 进入地图（带开场剧情判断） =====
+    enterMap: function() {
+        if (!this.state) return;
+        // 如果是新存档（第一章且未看过开场），先播放开场剧情
+        if (!this.state.seenIntro && this.state.chapter === 1) {
+            this.showIntro();
+            return;
+        }
+        this.toScreen('map');
+    },
+
+    // 显示开场剧情
+    showIntro: function() {
+        var overlay = document.getElementById('intro-overlay');
+        var textEl = document.getElementById('intro-text');
+        var hintEl = document.getElementById('intro-hint');
+        if (!overlay || !textEl) {
+            this.toScreen('map');
+            return;
+        }
+        var story = '黑暗……\n\n然后是刺眼的光。\n\n你睁开双眼，头痛欲裂。\n记忆模糊不清，只记得自己来自另一个世界……\n\n远处传来厮杀声与哭喊声。\n你挣扎着站起身，循声望去——\n\n一名少年武将正被数名黄巾卒围困，\n身上已有多处负伤，眼看就要支撑不住。\n\n你本能地拔起身旁的兵器，冲了上去！\n\n少年感激地望着你：\n"多谢壮士相救！我乃关羽之子关平，奉父命前来巨鹿助战。\n若不嫌弃，愿与壮士结伴同行！"\n\n你点了点头。\n\n黄巾乱世，就此开启。';
+        textEl.textContent = story;
+        overlay.style.display = 'flex';
+        // 触发淡入动画
+        setTimeout(function() {
+            textEl.style.opacity = '1';
+            hintEl.style.opacity = '1';
+        }, 100);
+    },
+
+    // 关闭开场剧情，进入地图
+    dismissIntro: function() {
+        var overlay = document.getElementById('intro-overlay');
+        var textEl = document.getElementById('intro-text');
+        if (overlay) overlay.style.display = 'none';
+        if (textEl) textEl.style.opacity = '0';
+        this.state.seenIntro = true;
+        this.saveGame();
+        this.toScreen('map');
+    },
+
     // ===== 角色创建 =====
     // 开局5级，20点自由分配
     createAttrs: { bili: 5, shenfa: 5, gengu: 5, fuqi: 5 },
@@ -204,6 +250,7 @@ var Game = {
             defeatedBosses: [],
             bossPhaseStates: {},
             playTime: 0,
+            seenIntro: false,
             teamPositions: {
                 hero: { x: 1, y: 2 },
                 guanping: { x: 0, y: 2 }

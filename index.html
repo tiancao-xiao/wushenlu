@@ -8,6 +8,11 @@
 </head>
 <body>
     <div id="game-container">
+        <!-- 开场剧情遮罩 -->
+        <div id="intro-overlay" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:#000;z-index:9999;flex-direction:column;justify-content:center;align-items:center;padding:40px 30px;text-align:center;cursor:pointer;" onclick="Game.dismissIntro()">
+            <div id="intro-text" style="color:#fff;font-size:18px;line-height:2;white-space:pre-wrap;opacity:0;transition:opacity 1s ease;"></div>
+            <div id="intro-hint" style="color:#888;font-size:14px;margin-top:40px;opacity:0;transition:opacity 1s ease 2s;">点击屏幕继续</div>
+        </div>
         <!-- 启动画面 -->
         <div id="splash-screen" class="screen active">
             <div class="splash-content">
@@ -130,7 +135,7 @@
                 </div>
             </div>
             <div class="main-menu">
-                <div class="menu-btn large" onclick="Game.toScreen('map')">
+                <div class="menu-btn large" onclick="Game.enterMap()">
                     <span class="menu-icon">⚔️</span>
                     <span class="menu-label">闯关</span>
                 </div>
