@@ -198,8 +198,6 @@ var Game = {
             visitedCells: [],
             defeatedCells: [],
             silver: 200,
-            actionPoints: 100,
-            maxActionPoints: 100,
             quests: [],
             formations: ['yulin', 'fengshi', 'bagua'],
             currentFormation: 'yulin',
@@ -247,7 +245,6 @@ var Game = {
         var hpText = document.getElementById('main-hp-text');
         var mpBar = document.getElementById('main-mp-bar');
         var mpText = document.getElementById('main-mp-text');
-        var actEl = document.getElementById('main-action');
         var silverEl = document.getElementById('main-silver');
 
         if (nameEl) nameEl.textContent = hero.name;
@@ -256,7 +253,7 @@ var Game = {
         if (hpText) hpText.textContent = Math.floor(stats.hp) + '/' + stats.maxHp;
         if (mpBar) mpBar.style.width = (stats.mp / stats.maxMp * 100) + '%';
         if (mpText) mpText.textContent = Math.floor(stats.mp) + '/' + stats.maxMp;
-        if (actEl) actEl.textContent = this.state.actionPoints;
+        if (silverEl) silverEl.textContent = this.state.silver;
         if (silverEl) silverEl.textContent = this.state.silver;
     },
 

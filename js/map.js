@@ -302,12 +302,6 @@ var Map = {
             return;
         }
 
-        if (Game.state.actionPoints < 1) {
-            UI.showModal('行动力不足', '你的行动力已耗尽，请等待恢复（每小时恢复10点）或明日再来。');
-            return;
-        }
-
-        Game.state.actionPoints--;
         Game.state.currentPos = { x: nx, y: ny };
         this.markVisited();
         this.saveChapterState();
