@@ -1,8 +1,9 @@
 // ===== 战斗系统（3×3 九宫格站位） =====
-// 【设计快照 2026-07-30】
+// 【设计快照 2026-08-01】
 // 修复：useSkill/useUlt 提前return未调用nextTurn导致卡死
 // 优化：目标选择逻辑——优先前排→同列→最近列→先左后右
 // 新增：伤害飘字效果
+// 新增：Boss阶段状态机支持（张梁→张宝→张角三人战）
 
 var Battle = {
     state: null,
@@ -53,15 +54,15 @@ var Battle = {
 
         // --- 敌方单位 ---
         var enemyUnits = [];
-        // 三连战第三场：同时出场三个boss
-        if (options.tripleBoss && options.bosses && options.triplePhase === 2) {
-            var tripleSlots = [
-                { x: 1, y: 0 },  // 张梁 - 前排
-                { x: 1, y: 1 },  // 张宝 - 中排
-                { x: 1, y: 2 }   // 张角 - 后排
+        // Boss阶段第三场：同时出场多个敌人（如张梁+张宝+张角）
+        if (options.bossPhaseEnemies && options.bossPhaseEnemies.length > 1) {
+            var bossSlots = [
+                { x: 1, y: 0 },  // 前排
+                { x: 1, y: 1 },  // 中排
+                { x: 1, y: 2 }   // 后排
             ];
-            for (var tj = 0; tj < options.bosses.length; tj++) {
-                var e = GAME_DATA.enemies[options.bosses[tj]];
+            for (var tj = 0; tj < options.bossPhaseEnemies.length; tj++) {
+                var e = GAME_DATA.enemies[options.bossPhaseEnemies[tj]];
                 if (!e) continue;
                 var scale = options.scale || 1;
                 var ehp = Math.floor(e.hp * scale * (1 + Game.state.chapter * 0.1));
@@ -83,7 +84,6 @@ var Battle = {
                 eu._dead = false;
                 eu._buffs = [];
                 eu._debuffs = [];
-                // Boss使用配置的技能
                 if (e.skills) {
                     eu._battleSkills = [];
                     for (var ski = 0; ski < e.skills.length; ski++) {
@@ -97,8 +97,8 @@ var Battle = {
                 }
                 eu._skillCd = [0, 0];
                 eu._canUseUlt = true;
-                eu.id = options.bosses[tj];
-                eu._pos = tripleSlots[tj] || { x: 1, y: 1 };
+                eu.id = options.bossPhaseEnemies[tj];
+                eu._pos = bossSlots[tj] || { x: 1, y: 1 };
                 enemyUnits.push(eu);
             }
         } else {
@@ -160,8 +160,7 @@ var Battle = {
             result: null,
             log: [],
             options: options,
-            floatingTexts: [],
-            triplePhase: options.triplePhase || 0
+            floatingTexts: []
         };
 
         this.calcActionOrder();
@@ -352,10 +351,6 @@ var Battle = {
     },
 
     // ===== 智能目标选择 =====
-    // 1. 优先攻击第一排（敌方y=0，我方y=2）
-    // 2. 同排优先同列
-    // 3. 然后离自己列最近的一列
-    // 4. 距离相同先左后右（x小的优先）
     pickTargetSmart: function(attacker) {
         var s = this.state;
         var targets = attacker._side === 'player' ? s.enemyUnits : s.playerUnits;
@@ -365,23 +360,18 @@ var Battle = {
         }
         if (alive.length === 0) return null;
 
-        // 玩家打敌方：优先 y 最大（敌方最下排 y=2）
-        // 敌方打玩家：优先 y 最小（我方最上排 y=0）
         var preferLargeY = attacker._side === 'player';
 
-        // 1. 按 y 优先排序
         alive.sort(function(a, b) {
             return preferLargeY ? (b._pos.y - a._pos.y) : (a._pos.y - b._pos.y);
         });
 
-        // 2. 找出最优先的 y
         var bestY = alive[0]._pos.y;
         var sameY = [];
         for (var i = 0; i < alive.length; i++) {
             if (alive[i]._pos.y === bestY) sameY.push(alive[i]);
         }
 
-        // 3. 同一 y 中，按与攻击者 x 的距离排序，距离相同 x 小的优先（先左后右）
         var ax = attacker._pos ? attacker._pos.x : 1;
         sameY.sort(function(a, b) {
             var da = Math.abs(a._pos.x - ax);
@@ -411,7 +401,7 @@ var Battle = {
                 this.addLog(unit.name + ' 使用了金疮药，恢复 <span class="log-heal">' + heal + '</span> HP', 'heal');
             } else {
                 this.addLog('没有可用的金疮药！', 'skill');
-                return; // 玩家回合，提示后让玩家继续操作
+                return;
             }
             this.nextTurn();
         } else if (action.indexOf('skill') === 0) {
@@ -472,7 +462,6 @@ var Battle = {
         }
     },
 
-    // ===== 技能释放（修复卡死：AI调用时提前return必须nextTurn） =====
     useSkill: function(unit, skillIndex) {
         var isAI = unit._side === 'enemy' || (this.state && !this.state.playerTurn);
         var skills = unit._battleSkills;
@@ -525,7 +514,6 @@ var Battle = {
         }
     },
 
-    // ===== 奥义释放（同样修复卡死） =====
     useUlt: function(unit) {
         var isAI = unit._side === 'enemy' || (this.state && !this.state.playerTurn);
         if (unit._ult < 100) {
@@ -646,11 +634,6 @@ var Battle = {
             return true;
         }
         if (aliveEnemy.length === 0) {
-            // 三连战：第一场或第二场胜利后，进入下一场
-            if (s.options.tripleBoss && s.triplePhase < 2) {
-                this.startNextTriplePhase();
-                return true;
-            }
             s.result = 'win';
             this.showResult();
             return true;
@@ -663,40 +646,6 @@ var Battle = {
         return false;
     },
 
-    // 三连战：进入下一场战斗
-    startNextTriplePhase: function() {
-        var s = this.state;
-        if (!s.options.tripleBoss || !s.options.bosses) return;
-        var nextPhase = s.triplePhase + 1;
-        var nextEnemy = s.options.bosses[nextPhase];
-
-        // 显示过渡提示
-        var bossNames = ['张梁', '张宝', '张角'];
-        var msgs = [
-            '张梁被击败，但张宝现身了！',
-            '张宝被击败，但张角降临了！',
-            ''
-        ];
-
-        if (nextPhase === 1) {
-            UI.showModal('战斗继续', '张梁被击败，但张宝现身了！<br><br>第二场战斗即将开始！');
-        } else if (nextPhase === 2) {
-            UI.showModal('最终决战', '张宝被击败，但张角降临了！<br><br>张梁、张宝、张角同时出手——最终决战！');
-        }
-
-        // 延迟后开始下一场
-        setTimeout(function() {
-            var newOptions = {
-                cellKey: s.options.cellKey,
-                tripleBoss: true,
-                bosses: s.options.bosses,
-                reward: s.options.reward,
-                triplePhase: nextPhase
-            };
-            Battle.start(nextEnemy, 1, newOptions);
-        }, 1500);
-    },
-
     showResult: function() {
         var s = this.state;
         var isWin = s.result === 'win';
@@ -706,23 +655,11 @@ var Battle = {
         var rewardsHtml = '';
         if (isWin && s.options.reward) {
             var r = s.options.reward;
-            // 三连战：只有最后一场才发全部奖励，前两场发部分奖励
-            if (s.options.tripleBoss) {
-                var phaseReward = s.triplePhase === 2 ? 1.0 : (s.triplePhase === 1 ? 0.3 : 0.15);
-                rewardsHtml += '<div class="reward-item">💰 银两 +' + Math.floor((r.silver || 0) * phaseReward) + '</div>';
-                rewardsHtml += '<div class="reward-item">⭐ 经验 +' + Math.floor((r.exp || 0) * phaseReward) + '</div>';
-                if (r.items && s.triplePhase === 2) {
-                    for (var i = 0; i < r.items.length; i++) {
-                        rewardsHtml += '<div class="reward-item">📦 ' + r.items[i] + '</div>';
-                    }
-                }
-            } else {
-                rewardsHtml += '<div class="reward-item">💰 银两 +' + (r.silver || 0) + '</div>';
-                rewardsHtml += '<div class="reward-item">⭐ 经验 +' + (r.exp || 0) + '</div>';
-                if (r.items) {
-                    for (var i = 0; i < r.items.length; i++) {
-                        rewardsHtml += '<div class="reward-item">📦 ' + r.items[i] + '</div>';
-                    }
+            rewardsHtml += '<div class="reward-item">💰 银两 +' + (r.silver || 0) + '</div>';
+            rewardsHtml += '<div class="reward-item">⭐ 经验 +' + (r.exp || 0) + '</div>';
+            if (r.items) {
+                for (var i = 0; i < r.items.length; i++) {
+                    rewardsHtml += '<div class="reward-item">📦 ' + r.items[i] + '</div>';
                 }
             }
         } else if (isWin) {
@@ -743,7 +680,6 @@ var Battle = {
                 }
             }
 
-            // 追踪击杀任务（按实际击杀数量统计）
             var killCount = 0;
             for (var ei = 0; ei < s.enemyUnits.length; ei++) {
                 if (s.enemyUnits[ei].id) killCount++;
@@ -752,16 +688,12 @@ var Battle = {
                 Game.trackKill(enemy.id, killCount);
             }
 
-            // 三连战经验在每场战斗结束时通过showResult发放
-            if (!this.state.options.tripleBoss) {
-                for (var i = 0; i < Game.state.team.length; i++) {
-                    var u = Game.state.team[i];
-                    if (!u._dead) Game.gainExp(u, exp);
-                }
-                Game.addSilver(silver);
+            for (var i = 0; i < Game.state.team.length; i++) {
+                var u = Game.state.team[i];
+                if (!u._dead) Game.gainExp(u, exp);
             }
+            Game.addSilver(silver);
         }
-
 
         document.getElementById('result-rewards').innerHTML = rewardsHtml;
         document.getElementById('battle-result').classList.add('active');
@@ -770,11 +702,64 @@ var Battle = {
     endBattle: function() {
         document.getElementById('battle-result').classList.remove('active');
         if (this.state.result === 'win') {
-            if (this.state.options.cellKey) {
-                Map.markDefeated(this.state.options.cellKey);
+            var cellKey = this.state.options.cellKey;
+
+            // ===== Boss阶段推进 =====
+            if (cellKey && this.state.options.bossPhase !== undefined) {
+                var phaseIndex = this.state.options.bossPhase;
+                var chapter = null;
+                for (var ci = 0; ci < GAME_DATA.chapters.length; ci++) {
+                    if (GAME_DATA.chapters[ci].id === Game.state.currentChapter) {
+                        chapter = GAME_DATA.chapters[ci];
+                        break;
+                    }
+                }
+                if (chapter) {
+                    var cell = chapter.cells[cellKey];
+                    if (cell && cell.phases) {
+                        // 推进到下一阶段
+                        var nextPhase = phaseIndex + 1;
+                        Game.state.bossPhaseStates[cellKey] = nextPhase;
+
+                        // 如果所有阶段完成，标记为defeated并通关
+                        if (nextPhase >= cell.phases.length) {
+                            Map.markDefeated(cellKey);
+                            var pos = Game.state.currentPos;
+                            if (pos.x === chapter.exitPos.x && pos.y === chapter.exitPos.y) {
+                                var unlockedNew = Map.unlockNextChapter(Game.state.currentChapter);
+                                if (unlockedNew) {
+                                    var nextCh = null;
+                                    for (var ni = 0; ni < GAME_DATA.chapters.length; ni++) {
+                                        if (GAME_DATA.chapters[ni].id === Game.state.currentChapter + 1) {
+                                            nextCh = GAME_DATA.chapters[ni];
+                                            break;
+                                        }
+                                    }
+                                    UI.showModal('章节通关！', '恭喜通关<b>' + chapter.name + '——' + chapter.location + '</b>！<br><br>' + (nextCh ? '下一章「' + nextCh.name + '——' + nextCh.location + '」已解锁！' : '所有章节已通关！'));
+                                }
+                            }
+                        } else {
+                            // 阶段推进提示
+                            var nextName = cell.phases[nextPhase] ? cell.phases[nextPhase].name : '';
+                            if (nextName) {
+                                UI.showModal('战斗胜利', '你击败了敌人！<br><br>但' + nextName + '出现了……返回地图后可再次挑战。');
+                            }
+                        }
+                        Game.saveGame();
+                        Game.toScreen('map');
+                        Map.init(Game.state.currentChapter);
+                        this.state = null;
+                        return;
+                    }
+                }
             }
 
-            // 检查是否击败当前章节的Boss
+            // 普通战斗：标记击败
+            if (cellKey) {
+                Map.markDefeated(cellKey);
+            }
+
+            // 检查是否击败当前章节的Boss（普通boss）
             var currentChapterId = Game.state.currentChapter;
             var chapter = null;
             for (var ci = 0; ci < GAME_DATA.chapters.length; ci++) {
@@ -814,7 +799,6 @@ var Battle = {
         this.state = null;
     },
 
-    // ===== 飘字系统 =====
     addFloatingText: function(target, value, type) {
         if (!this.state || !target || !target._pos) return;
         var text = value;
@@ -835,7 +819,6 @@ var Battle = {
         });
     },
 
-    // ===== 九宫格渲染 =====
     render: function() {
         if (!this.state) return;
         var s = this.state;
@@ -889,7 +872,6 @@ var Battle = {
             posMap[key] = u;
         }
 
-        // 收集该side的飘字
         var floats = [];
         if (this.state && this.state.floatingTexts) {
             var now = Date.now();
@@ -933,7 +915,6 @@ var Battle = {
         }
         html += '</div>';
 
-        // 清理过期飘字
         if (this.state && this.state.floatingTexts) {
             var now2 = Date.now();
             var kept = [];
@@ -950,7 +931,6 @@ var Battle = {
 
     selectTarget: function(index) {
         if (!this.state || !this.state.playerTurn) return;
-        // 暂时不实现手动选目标，自动选择
     },
 
     addLog: function(text, type) {

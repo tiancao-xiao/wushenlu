@@ -52,6 +52,10 @@ var Game = {
                 if (!this.state.redeemedCodes) {
                     this.state.redeemedCodes = [];
                 }
+                // 兼容旧存档：补充 bossPhaseStates
+                if (!this.state.bossPhaseStates) {
+                    this.state.bossPhaseStates = {};
+                }
                 // 兼容旧存档：补充 knownSkills / knownUlts / equippedSkills / equippedUlt
                 var hero = this.state.hero;
                 if (hero) {
@@ -200,6 +204,7 @@ var Game = {
             formations: ['yulin', 'fengshi', 'bagua'],
             currentFormation: 'yulin',
             defeatedBosses: [],
+            bossPhaseStates: {},
             playTime: 0,
             teamPositions: {
                 hero: { x: 1, y: 2 },

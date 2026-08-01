@@ -433,7 +433,7 @@ var GAME_DATA = {
             cells: {
                 // 第一行 y=5（最上排）
                 '0,5': { type: 'start', icon: '🏠', desc: '起点：巨鹿城郊的村庄' },
-                '1,5': { type: 'empty', icon: '⬜', desc: '荒野小径，杂草丛生。' },
+                '1,5': { type: 'npc', icon: '👑', npc: 'liubei', npcName: '刘备', desc: '城守刘备正在组织义军抵抗黄巾。', dialog: '壮士来得正好！黄巾贼众肆虐巨鹿，百姓苦不堪言。我已率部在此抵抗，若能击破贼首张梁张宝张角，巨鹿百姓方能安居乐业。' },
                 '2,5': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '前方有黄巾兵拦路！' },
                 '3,5': { type: 'empty', icon: '⬜', desc: '一片枯树林，阴风阵阵。' },
                 '4,5': { type: 'npc', icon: '👤', npc: 'cunmin_a', npcName: '村民阿福', desc: '一位村民神色慌张，似乎有话要说。', dialog: '壮士！黄巾贼在附近烧杀抢掠，求你出手相助！杀了20个黄巾兵再来找我。' },
@@ -477,8 +477,8 @@ var GAME_DATA = {
                 '2,0': { type: 'empty', icon: '⬜', desc: '营门大开，杀声震天。' },
                 '3,0': { type: 'battle', icon: '💀', enemy: 'huangjin_daoshuai', count: 1, desc: '黄巾大帅死守营门！' },
                 '4,0': { type: 'empty', icon: '⬜', desc: '祭坛外围，旌旗猎猎。' },
-                // (5,0) boss关——三连战
-                '5,0': { type: 'boss', icon: '👹', enemy: 'boss_zhangliang', desc: '黄巾祭坛——张梁正在施法！', reward: { exp: 800, silver: 1200 }, bossType: 'triple', bosses: ['boss_zhangliang', 'boss_zhangbao', 'boss_zhangjiao'] }
+                // (5,0) boss关——三阶段：张梁→张宝→张角（最终三人同时出场）
+                '5,0': { type: 'boss', icon: '👹', desc: '黄巾祭坛——天公将军的道场，杀气弥漫。', reward: { exp: 800, silver: 1200 }, phases: [ { enemy: 'boss_zhangliang', icon: '🔥', name: '张梁', desc: '人公将军张梁正在祭坛前施法，太平道的妖火在他周身燃烧。', dialog: '张梁：苍天已死，黄天当立！太平道万岁！逆贼，受死吧！' }, { enemy: 'boss_zhangbao', icon: '❄️', name: '张宝', desc: '地公将军张宝踏冰而来，眼中满是复仇的怒火。', dialog: '张宝：二哥！我来为你报仇！玄冰风暴，起！' }, { enemies: ['boss_zhangliang','boss_zhangbao','boss_zhangjiao'], icon: '⚡', name: '张角', desc: '天公将军张角降临，张梁张宝死而复生，三人同列中间，太平道的最终力量在此凝聚。', dialog: '张角：苍天已死，黄天当立！岁在甲子，天下大吉！你们……都要葬身于此！' } ] }
             }
         },
         {

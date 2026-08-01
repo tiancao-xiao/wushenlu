@@ -1,6 +1,7 @@
 // ===== 地图探索系统（网格迷宫） =====
-// 【设计快照 2026-07-30】
+// 【设计快照 2026-08-01】
 // 章节选择 → 进入具体章节 → 网格探索
+// Boss阶段状态机：支持多阶段Boss战（如张梁→张宝→张角）
 
 var Map = {
     // ===== 章节选择界面 =====
@@ -25,7 +26,7 @@ var Map = {
                 if (unlocked[j] === ch.id) { isUnlocked = true; break; }
             }
             var isCurrent = Game.state.currentChapter === ch.id;
-            var isCleared = Game.state.chapter > ch.id; // 已经打到更后面去了
+            var isCleared = Game.state.chapter > ch.id;
 
             var style = 'padding:16px;border-radius:8px;border:2px solid ';
             if (isUnlocked) {
@@ -48,11 +49,6 @@ var Map = {
     },
 
     enterChapter: function(chapterId) {
-        // 保存当前章节进度（如果有）
-        if (Game.state.currentChapter) {
-            // 可以在这里保存当前章节的 visited/defeated 到存档里
-            // 暂时简单处理：切换章节时重置当前位置
-        }
         Game.state.currentChapter = chapterId;
         Game.saveGame();
         this.init(chapterId, true);
@@ -78,7 +74,6 @@ var Map = {
         var titleEl = document.getElementById('map-chapter-title');
         if (titleEl) titleEl.textContent = '第' + chapter.id + '章 ' + chapter.name + '——' + chapter.location;
 
-        // 每个章节独立的探索状态
         var chapterStateKey = 'chapter_' + chapterId;
         if (!Game.state.chapterStates) Game.state.chapterStates = {};
         if (!Game.state.chapterStates[chapterStateKey]) {
@@ -88,12 +83,10 @@ var Map = {
                 defeatedCells: []
             };
         } else if (resetPos) {
-            // 只有从章节选择重新进入时，才重置位置到起点（防止卡关）
             Game.state.chapterStates[chapterStateKey].currentPos = { x: chapter.startPos.x, y: chapter.startPos.y };
         }
         var cs = Game.state.chapterStates[chapterStateKey];
 
-        // 同步到全局状态（供其他函数使用）
         Game.state.currentPos = cs.currentPos;
         Game.state.visitedCells = cs.visitedCells;
         Game.state.defeatedCells = cs.defeatedCells;
@@ -103,7 +96,6 @@ var Map = {
         this.showCurrentEvent(chapter);
     },
 
-    // 保存当前章节状态
     saveChapterState: function() {
         if (!Game.state || !Game.state.currentChapter) return;
         var chapterStateKey = 'chapter_' + Game.state.currentChapter;
@@ -124,9 +116,7 @@ var Map = {
         for (var i = 0; i < visited.length; i++) {
             if (visited[i] === key) { found = true; break; }
         }
-        if (!found) {
-            visited.push(key);
-        }
+        if (!found) visited.push(key);
     },
 
     renderFullMap: function(chapter) {
@@ -151,12 +141,27 @@ var Map = {
                 }
                 var isCurrent = Game.state.currentPos.x === x && Game.state.currentPos.y === y;
 
+                // Boss阶段状态：显示当前阶段的图标
+                var displayIcon = cell ? cell.icon : '⬛';
+                if (cell && cell.type === 'boss' && cell.phases && isVisited) {
+                    var phaseIndex = Game.state.bossPhaseStates[key] || 0;
+                    if (phaseIndex < cell.phases.length) {
+                        displayIcon = cell.phases[phaseIndex].icon;
+                    }
+                }
+
                 var style = 'width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:18px;';
                 if (isCurrent) {
                     style += 'background:#d4a843;color:#fff;border:2px solid #fff;';
                 } else if (isVisited) {
                     if (cell && (cell.type === 'battle' || cell.type === 'elite' || cell.type === 'boss')) {
-                        style += isDefeated ? 'background:#4a7ab8;color:#fff;' : 'background:#c2392b;color:#fff;';
+                        // Boss有phases时，全部阶段完成才算defeated
+                        var bossDefeated = isDefeated;
+                        if (cell.type === 'boss' && cell.phases) {
+                            var pi = Game.state.bossPhaseStates[key] || 0;
+                            bossDefeated = pi >= cell.phases.length;
+                        }
+                        style += bossDefeated ? 'background:#4a7ab8;color:#fff;' : 'background:#c2392b;color:#fff;';
                     } else if (cell && cell.type === 'chest') {
                         style += 'background:#8b5a9e;color:#fff;';
                     } else if (cell && cell.type === 'npc') {
@@ -168,7 +173,7 @@ var Map = {
                     style += 'background:#111;color:#333;';
                 }
 
-                var icon = isVisited ? (cell ? cell.icon : '⬛') : '❔';
+                var icon = isVisited ? displayIcon : '❔';
                 html += '<div style="' + style + '" title="' + (isVisited && cell ? cell.desc : '未探索') + '">' + icon + '</div>';
             }
         }
@@ -190,13 +195,22 @@ var Map = {
             { key: 'right', dx: 1,  dy: 0,  label: '➡️ 右' }
         ];
 
+        // 当前格子的显示图标（Boss阶段状态机）
+        var curIcon = cell ? cell.icon : '⬜';
+        if (cell && cell.type === 'boss' && cell.phases) {
+            var key = pos.x + ',' + pos.y;
+            var phaseIndex = Game.state.bossPhaseStates[key] || 0;
+            if (phaseIndex < cell.phases.length) {
+                curIcon = cell.phases[phaseIndex].icon;
+            }
+        }
+
         var html = '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:12px;">';
 
         html += this.renderDirButton(chapter, pos, dirs[0], visited, defeated);
 
         html += '<div style="display:flex;align-items:center;gap:8px;">';
         html += this.renderDirButton(chapter, pos, dirs[2], visited, defeated);
-        var curIcon = cell ? cell.icon : '⬜';
         html += '<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#d4a843;color:#fff;font-size:32px;border:3px solid #fff;">' + curIcon + '</div>';
         html += this.renderDirButton(chapter, pos, dirs[3], visited, defeated);
         html += '</div>';
@@ -269,15 +283,14 @@ var Map = {
             }
         }
 
-        // 检查当前格子是否有未击败的怪——如果有，必须先击败才能离开
-        var curKey = pos.x + ',' + pos.y;
-        var curCell = chapter.cells[curKey];
+        // 检查当前格子是否有未击败的怪——Boss阶段单元格允许自由离开（可回去补给）
         var defeated = Game.state.defeatedCells;
         var curDefeated = false;
         for (var i = 0; i < defeated.length; i++) {
             if (defeated[i] === curKey) { curDefeated = true; break; }
         }
-        if (curCell && (curCell.type === 'battle' || curCell.type === 'elite' || curCell.type === 'boss') && !curDefeated) {
+        var isBossWithPhases = curCell && curCell.type === 'boss' && curCell.phases;
+        if (!isBossWithPhases && curCell && (curCell.type === 'battle' || curCell.type === 'elite' || curCell.type === 'boss') && !curDefeated) {
             UI.showModal('遭遇敌人', '这里有 ' + (curCell.desc || '敌人') + '，必须先击败它才能离开！');
             return;
         }
@@ -311,6 +324,27 @@ var Map = {
         for (var i = 0; i < defeated.length; i++) {
             if (defeated[i] === key) { isDefeated = true; break; }
         }
+
+        // ===== Boss阶段状态机处理 =====
+        if (cell.type === 'boss' && cell.phases) {
+            var phaseIndex = Game.state.bossPhaseStates[key] || 0;
+            var allCleared = phaseIndex >= cell.phases.length;
+
+            if (allCleared) {
+                descEl.innerHTML = '<b>' + cell.icon + ' BOSS</b><br>' + cell.desc + '<br><br><i style="color:#6b8e6b">✓ 太平道已灭，巨鹿重获安宁（可再次挑战最终决战）</i>';
+                actionsEl.innerHTML = '<button onclick="Map.startBossPhaseBattle()">再次挑战最终决战</button>' +
+                    '<button class="secondary" onclick="Map.toggleMapView()">查看全图</button>' +
+                    '<button class="secondary" onclick="Map.showChapterSelect()">返回章节选择</button>';
+            } else {
+                var phase = cell.phases[phaseIndex];
+                descEl.innerHTML = '<b>' + phase.icon + ' ' + phase.name + '</b><br>' + phase.desc;
+                actionsEl.innerHTML = '<button onclick="Map.talkBossPhase()">对话</button>' +
+                    '<button class="secondary" onclick="Map.toggleMapView()">查看全图</button>' +
+                    '<button class="secondary" onclick="Map.showChapterSelect()">返回章节选择</button>';
+            }
+            return;
+        }
+
         var isHostile = (cell.type === 'battle' || cell.type === 'elite' || cell.type === 'boss');
         var isCleared = isHostile && isDefeated;
 
@@ -405,8 +439,8 @@ var Map = {
         Battle.start(cell.enemy, 1, options);
     },
 
-    // Boss三连战（第一章张梁→张宝→张角）
-    startTripleBossBattle: function() {
+    // Boss阶段对话与战斗（第一章张梁→张宝→张角）
+    talkBossPhase: function() {
         var chapter = null;
         for (var i = 0; i < GAME_DATA.chapters.length; i++) {
             if (GAME_DATA.chapters[i].id === Game.state.currentChapter) {
@@ -417,16 +451,52 @@ var Map = {
         if (!chapter) return;
         var pos = Game.state.currentPos;
         var cell = chapter.cells[pos.x + ',' + pos.y];
-        if (!cell || !cell.bosses || cell.bosses.length < 3) return;
+        if (!cell || !cell.phases) return;
 
+        var key = pos.x + ',' + pos.y;
+        var phaseIndex = Game.state.bossPhaseStates[key] || 0;
+        if (phaseIndex >= cell.phases.length) return;
+
+        var phase = cell.phases[phaseIndex];
+        var content = phase.dialog || '...';
+        var buttons = '<div class="npc-dialog-actions">' +
+            '<button onclick="UI.closeModal();Map.startBossPhaseBattle()">⚔️ 迎战 ' + phase.name + '</button>' +
+            '<button class="secondary" onclick="UI.closeModal()">稍后再来</button>' +
+            '</div>';
+
+        UI.showModal(phase.name, content + '<br><br>' + buttons);
+    },
+
+    startBossPhaseBattle: function() {
+        var chapter = null;
+        for (var i = 0; i < GAME_DATA.chapters.length; i++) {
+            if (GAME_DATA.chapters[i].id === Game.state.currentChapter) {
+                chapter = GAME_DATA.chapters[i];
+                break;
+            }
+        }
+        if (!chapter) return;
+        var pos = Game.state.currentPos;
+        var cell = chapter.cells[pos.x + ',' + pos.y];
+        if (!cell || !cell.phases) return;
+
+        var key = pos.x + ',' + pos.y;
+        var phaseIndex = Game.state.bossPhaseStates[key] || 0;
+        if (phaseIndex >= cell.phases.length) return;
+
+        var phase = cell.phases[phaseIndex];
         var options = {
-            cellKey: pos.x + ',' + pos.y,
-            tripleBoss: true,
-            bosses: cell.bosses,
+            cellKey: key,
+            bossPhase: phaseIndex,
             reward: cell.reward
         };
 
-        Battle.start(cell.bosses[0], 1, options);
+        if (phase.enemies) {
+            options.bossPhaseEnemies = phase.enemies;
+            Battle.start(phase.enemies[0], 1, options);
+        } else if (phase.enemy) {
+            Battle.start(phase.enemy, 1, options);
+        }
     },
 
     markDefeated: function(cellKey) {
@@ -435,9 +505,7 @@ var Map = {
         for (var i = 0; i < defeated.length; i++) {
             if (defeated[i] === cellKey) { found = true; break; }
         }
-        if (!found) {
-            defeated.push(cellKey);
-        }
+        if (!found) defeated.push(cellKey);
         this.saveChapterState();
         Game.saveGame();
     },
@@ -628,7 +696,6 @@ var Map = {
         if (!already) {
             unlocked.push(nextId);
             Game.state.unlockedChapters = unlocked;
-            // 更新总进度
             if (nextId > Game.state.chapter) {
                 Game.state.chapter = nextId;
             }
