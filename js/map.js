@@ -556,7 +556,17 @@ var Map = {
             content = '多亏有你，「' + completedQuestName + '」已经圆满完成了！真是太感谢了！';
         }
 
+        // 刘备特殊对话：击败张角后切换为战后感谢
+        if (cell.npc === 'liubei') {
+            var bossKey = '5,0';
+            var bossPhase = Game.state.bossPhaseStates[bossKey] || 0;
+            if (bossPhase >= 3) {
+                content = '刘备：（握住你的手，神色激动）壮士真乃神人也！张角三兄弟横行巨鹿数月，今日终于被你所破，百姓终于可以安居乐业了！\\n\\n（压低声音）不瞒壮士，我刘备虽出身微末，却心怀匡扶汉室之志。如今乱世已至，正是英雄辈出之时。若壮士不嫌弃，可愿与我等共扶汉室，平定天下之乱？';
+            }
+        }
+
         // 根据NPC类型添加功能按钮
+        var buttons = '<div class="npc-dialog-actions">';
         var buttons = '<div class="npc-dialog-actions">';
 
         if (cell.npc === 'tiejiang') {

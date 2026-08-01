@@ -619,53 +619,54 @@ var GAME_DATA = {
             desc: '天下大乱，黄巾军四起，你从家乡出发，初涉乱世。',
             cells: {
                 // 第一行 y=5（最上排）
-                '0,5': { type: 'start', icon: '🏠', desc: '起点：巨鹿城郊的村庄' },
-                '1,5': { type: 'npc', icon: '👑', npc: 'liubei', npcName: '刘备', desc: '城守刘备正在组织义军抵抗黄巾。', dialog: '壮士来得正好！黄巾贼众肆虐巨鹿，百姓苦不堪言。我已率部在此抵抗，若能击破贼首张梁张宝张角，巨鹿百姓方能安居乐业。' },
-                '2,5': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '前方有黄巾兵拦路！' },
-                '3,5': { type: 'empty', icon: '⬜', desc: '一片枯树林，阴风阵阵。' },
-                '4,5': { type: 'npc', icon: '👤', npc: 'cunmin_a', npcName: '村民阿福', desc: '一位村民神色慌张，似乎有话要说。', dialog: '壮士！黄巾贼在附近烧杀抢掠，求你出手相助！杀了20个黄巾兵再来找我。' },
-                '5,5': { type: 'chest', icon: '📦', desc: '发现一个被遗弃的补给箱。', reward: { items: ['tiekuang:3', 'caoyao:2'], silver: 50 } },
+                '0,5': { type: 'start', icon: '🏠', desc: '巨鹿荒野——你在这陌生的世界苏醒，远处火光冲天，黄巾军的号角声此起彼伏。', dialog: '你睁开双眼，头痛欲裂。记忆模糊不清，只记得自己来自另一个世界……不远处传来厮杀声，一名少年武将正被数名黄巾卒围困。你本能地拔起身旁的兵器，冲了上去！\\n\\n少年感激道："多谢壮士相救！我乃关羽之子关平，奉父命前来巨鹿助战。若不嫌弃，愿与壮士结伴同行！"' },
+
+                '1,5': { type: 'npc', icon: '👑', npc: 'liubei', npcName: '刘备', desc: '城守刘备正立于城头，眉宇间尽是忧色。', dialog: '壮士来得正好！黄巾贼众已将巨鹿团团围住，百姓苦不堪言。我军虽奋力抵抗，但贼势浩大，实难支撑。听闻壮士与关平少侠神勇过人，若能击破贼首张梁张宝张角三兄弟，巨鹿百姓方能安居乐业。拜托了！' },
+                '2,5': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '黄巾前锋正在搜捕逃散的百姓！' },
+                '3,5': { type: 'empty', icon: '⬜', desc: '枯树林中弥漫着血腥气，黄巾军经过的痕迹清晰可见。' },
+                '4,5': { type: 'npc', icon: '👤', npc: 'cunmin_a', npcName: '村民阿福', desc: '一位村民神色慌张，躲在一棵大树后。', dialog: '壮士救命！黄巾贼杀了好多人……求你帮帮我们！杀了那些黄巾兵，我必有重谢！' },
+                '5,5': { type: 'chest', icon: '📦', desc: '一名阵亡义军留下的补给箱，里面还有些物资。', reward: { items: ['tiekuang:3', 'caoyao:2'], silver: 50 } },
 
                 // 第二行 y=4
-                '0,4': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '黄巾卒正在搜查村庄！' },
-                '1,4': { type: 'empty', icon: '⬜', desc: '破旧的茅草屋，人去楼空。' },
-                '2,4': { type: 'npc', icon: '👤', npc: 'tiejiang', npcName: '老铁匠', desc: '一位老铁匠在废墟中整理工具。', dialog: '小伙子，想打造兵器吗？收集材料来找我。' },
-                '3,4': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾兵巡逻队正在靠近！' },
-                '4,4': { type: 'empty', icon: '⬜', desc: '干涸的河床，遍布碎石。' },
-                '5,4': { type: 'battle', icon: '💀', enemy: 'huangjin_xiaoshuai', count: 1, desc: '黄巾小帅率领手下在此设伏！' },
+                '0,4': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '黄巾卒正在焚烧村庄，浓烟滚滚！' },
+                '1,4': { type: 'empty', icon: '⬜', desc: '被烧毁的茅草屋还在冒烟，曾经的人家已不知所踪。' },
+                '2,4': { type: 'npc', icon: '👤', npc: 'tiejiang', npcName: '老铁匠', desc: '老铁匠在废墟中整理着残存的工具，见你来便抬起头。', dialog: '这乱世，兵器比粮食还金贵。小伙子，想打造趁手的兵器吗？收集材料来找我，价格公道。' },
+                '3,4': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾巡逻队发现了你们，大声呼喝着围了上来！' },
+                '4,4': { type: 'empty', icon: '⬜', desc: '干涸的河床上横七竖八躺着尸体，战争的残酷触目惊心。' },
+                '5,4': { type: 'battle', icon: '💀', enemy: 'huangjin_xiaoshuai', count: 1, desc: '一名黄巾小帅率亲兵在此设伏，企图截断入城要道！' },
 
                 // 第三行 y=3
-                '0,3': { type: 'chest', icon: '📦', desc: '一棵古树下的藏宝箱。', reward: { items: ['jinchuang:2', 'muchai:3'], silver: 80 } },
-                '1,3': { type: 'empty', icon: '⬜', desc: '荒野草地，偶尔有野兔窜过。' },
-                '2,3': { type: 'npc', icon: '👤', npc: 'cunmin_b', npcName: '村民阿贵', desc: '一位村民正在采药，却遇到了麻烦。', dialog: '壮士，我最近急需草药治病，你能帮我收集15株草药吗？' },
-                '3,3': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 3, desc: '一群黄巾卒挡住了去路！' },
-                '4,3': { type: 'empty', icon: '⬜', desc: '废弃的驿站，牌匾歪斜。' },
-                '5,3': { type: 'hidden', icon: '❓', desc: '空气中弥漫着一股神秘的气息...', condition: { fuqi: 8 }, reward: { items: ['chixiao_frag:1'] } },
+                '0,3': { type: 'chest', icon: '📦', desc: '义军撤退时藏在一棵古树下的物资箱。', reward: { items: ['jinchuang:2', 'muchai:3'], silver: 80 } },
+                '1,3': { type: 'empty', icon: '⬜', desc: '荒野草地上一片狼藉，偶尔有野兔从尸堆中窜过。' },
+                '2,3': { type: 'npc', icon: '👤', npc: 'cunmin_b', npcName: '村民阿贵', desc: '一位村民正蹲在草丛中采药，见你来连忙招手。', dialog: '壮士！我娘病重急需草药，可这附近全是黄巾贼，我不敢走远……你能帮我收集些草药吗？15株就够了！' },
+                '3,3': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 3, desc: '一群黄巾卒挡住了通往城内的路，叫嚣着要拿你们领赏！' },
+                '4,3': { type: 'empty', icon: '⬜', desc: '废弃的驿站牌匾歪斜，里面传来低沉的啜泣声。' },
+                '5,3': { type: 'hidden', icon: '❓', desc: '一缕奇异的光芒从乱石堆中透出，似乎藏着什么宝物……', condition: { fuqi: 8 }, reward: { items: ['chixiao_frag:1'] } },
 
                 // 第四行 y=2
-                '0,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾兵的主力部队！' },
-                '1,2': { type: 'empty', icon: '⬜', desc: '荒芜的农田，庄稼早已枯萎。' },
-                '2,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_xiaoshuai', count: 2, desc: '两名黄巾小帅在此驻守！' },
-                '3,2': { type: 'chest', icon: '📦', desc: '一辆翻倒的粮车，物资散落一地。', reward: { items: ['jingtie:2', 'caoyao:3'], silver: 100 } },
-                '4,2': { type: 'empty', icon: '⬜', desc: '一条蜿蜒的山路，通往黄巾大营。' },
-                '5,2': { type: 'battle', icon: '💀', enemy: 'huangjin_daoshuai', count: 1, desc: '黄巾大帅亲率精锐把守要道！' },
+                '0,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 3, desc: '黄巾主力部队正在围攻一座民宅，里面隐约传来妇孺的哭喊声！' },
+                '1,2': { type: 'empty', icon: '⬜', desc: '荒芜的农田里庄稼早已枯萎，一只乌鸦站在稻草人上嘎嘎叫着。' },
+                '2,2': { type: 'battle', icon: '⚔️', enemy: 'huangjin_xiaoshuai', count: 2, desc: '两名黄巾小帅在此驻守，是通往大营的必经之路！' },
+                '3,2': { type: 'chest', icon: '📦', desc: '一辆翻倒的粮车，上面的义军徽记还很新，物资散落一地。', reward: { items: ['jingtie:2', 'caoyao:3'], silver: 100 } },
+                '4,2': { type: 'empty', icon: '⬜', desc: '一条蜿蜒的山路通向远处，黄巾大营的火光在夜色中格外刺眼。' },
+                '5,2': { type: 'battle', icon: '💀', enemy: 'huangjin_daoshuai', count: 1, desc: '黄巾大帅亲率精锐把守通往大营的最后关卡，杀气腾腾！' },
 
                 // 第五行 y=1
-                '0,1': { type: 'empty', icon: '⬜', desc: '荒凉的村庄，空无一人。' },
-                '1,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '黄巾卒正在搜查残屋！' },
-                '2,1': { type: 'empty', icon: '⬜', desc: '一片竹林，风吹过沙沙作响。' },
+                '0,1': { type: 'empty', icon: '⬜', desc: '荒凉的村庄空无一人，只有几只野狗在废墟中翻找食物。' },
+                '1,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_zu', count: 2, desc: '黄巾卒正在搜查残屋，见到你们立刻吹响号角！' },
+                '2,1': { type: 'empty', icon: '⬜', desc: '一片竹林在风中沙沙作响，月光透过竹叶洒下斑驳的影子。' },
                 '3,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 2, desc: '黄巾兵的暗哨！', blockedDirs: ['down'] },
-                '4,1': { type: 'npc', icon: '👤', npc: 'liaohua', npcName: '廖化', desc: '一名义军小将正被黄巾兵围困，急需救援！', dialog: '多谢壮士相救！我乃义军廖化，愿随壮士共讨黄巾！', blockedDirs: ['down'] },
-                '5,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 4, desc: '黄巾兵重重包围！', blockedDirs: ['down'] },
+                '4,1': { type: 'npc', icon: '👤', npc: 'liaohua', npcName: '廖化', desc: '一名义军小将正背靠断墙喘息，身上多处负伤。', dialog: '多谢壮士相救！我乃义军廖化，奉命潜入敌营刺探军情，不料中了埋伏……幸得壮士路过。黄巾贼势大，我愿随壮士共讨贼寇，以报国恩！', blockedDirs: ['down'] },
+                '5,1': { type: 'battle', icon: '⚔️', enemy: 'huangjin_bing', count: 4, desc: '黄巾兵重重包围，显然已经发现你们的行踪！', blockedDirs: ['down'] },
 
                 // 第六行 y=0（最下排，boss区域）
-                '0,0': { type: 'empty', icon: '⬜', desc: '黄巾大营外围，戒备森严。' },
-                '1,0': { type: 'battle', icon: '⚔️', enemy: 'huangjin_xiaoshuai', count: 2, desc: '最后的防线——黄巾小帅拼死抵抗！' },
-                '2,0': { type: 'empty', icon: '⬜', desc: '营门大开，杀声震天。' },
-                '3,0': { type: 'battle', icon: '💀', enemy: 'huangjin_daoshuai', count: 1, desc: '黄巾大帅死守营门！' },
-                '4,0': { type: 'empty', icon: '⬜', desc: '祭坛外围，旌旗猎猎。' },
+                '0,0': { type: 'empty', icon: '⬜', desc: '黄巾大营外围戒备森严，巡逻的火把在黑暗中摇曳。' },
+                '1,0': { type: 'battle', icon: '⚔️', enemy: 'huangjin_xiaoshuai', count: 2, desc: '最后的防线——两名黄巾小帅拼死抵抗，试图为大营争取时间！' },
+                '2,0': { type: 'empty', icon: '⬜', desc: '营门大开，里面传来震天的喊杀声与诡异的呢喃，太平道的妖术似乎在暗中涌动。' },
+                '3,0': { type: 'battle', icon: '💀', enemy: 'huangjin_daoshuai', count: 1, desc: '黄巾大帅死守祭坛营门，身上的战甲已被鲜血染红！' },
+                '4,0': { type: 'empty', icon: '⬜', desc: '祭坛外围旌旗猎猎，空气中弥漫着刺鼻的硫磺味，太平道的符咒贴满了石柱。' },
                 // (5,0) boss关——三阶段：张梁→张宝→张角（最终三人同时出场）
-                '5,0': { type: 'boss', icon: '👹', desc: '黄巾祭坛——天公将军的道场，杀气弥漫。', reward: { exp: 800, silver: 1200 }, phases: [ { enemy: 'boss_zhangliang', icon: '🔥', name: '张梁', desc: '人公将军张梁正在祭坛前施法，太平道的妖火在他周身燃烧。', dialog: '张梁：苍天已死，黄天当立！太平道万岁！逆贼，受死吧！' }, { enemy: 'boss_zhangbao', icon: '❄️', name: '张宝', desc: '地公将军张宝踏冰而来，眼中满是复仇的怒火。', dialog: '张宝：二哥！我来为你报仇！玄冰风暴，起！' }, { enemies: ['boss_zhangliang','boss_zhangbao','boss_zhangjiao'], icon: '⚡', name: '张角', desc: '天公将军张角降临，张梁张宝死而复生，三人同列中间，太平道的最终力量在此凝聚。', dialog: '张角：苍天已死，黄天当立！岁在甲子，天下大吉！你们……都要葬身于此！' } ] }
+                '5,0': { type: 'boss', icon: '👹', desc: '黄巾祭坛——太平道的核心道场，妖火与冰雾交织，杀气弥漫。', reward: { exp: 800, silver: 1200 }, phases: [ { enemy: 'boss_zhangliang', icon: '🔥', name: '张梁', desc: '人公将军张梁正在祭坛前施法，太平道的妖火在他周身燃烧。', dialog: '张梁：哈哈哈！又有人来送死了？苍天已死，黄天当立！我张梁今日便用这妖火将你们烧成灰烬！' }, { enemy: 'boss_zhangbao', icon: '❄️', name: '张宝', desc: '地公将军张宝踏冰而来，眼中满是复仇的怒火。', dialog: '张宝：三弟——！我来为你报仇！玄冰风暴，起！你们一个都别想活着离开！' }, { enemies: ['boss_zhangliang','boss_zhangbao','boss_zhangjiao'], icon: '⚡', name: '张角', desc: '天公将军张角降临，张梁张宝死而复生，三人同列中间，太平道的最终力量在此凝聚。', dialog: '张角：（缓缓睁开双眼，瞳孔中似有星辰幻灭）异星降世……原来谶语是真的。壮士，你身上的气息不属于这个时代。但即便如此，太平道的理想也不会就此终结！张梁、张宝，随我——送他们上路！' } ] }
             }
         },
         {
